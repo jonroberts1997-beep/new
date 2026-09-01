@@ -389,7 +389,7 @@
     <div class="prompt-card">
       <span class="zone-chip" id="promptZoneChip">Zone —</span>
       <div class="location-line" id="promptLocationLine"></div>
-      <div class="almanac-note">
+      <div class="almanac-note" id="almanacNote">
         For the most accurate results, look up your frost dates at
         <a href="https://www.almanac.com/gardening/frostdates" target="_blank" rel="noopener">almanac.com/gardening/frostdates</a>
         and enter them below.
@@ -538,6 +538,83 @@
   }
 
   // ---------------------------------------------------------------
+  // Historical frost dates, computed from real local weather data.
+  // Open-Meteo's archive API (free, keyless, CORS-enabled) returns
+  // daily low temperatures for any coordinates going back decades.
+  // We pull the last 15 full years and, for each year, find the last
+  // sub-32°F reading before July 1 (spring frost) and the first
+  // sub-32°F reading on/after July 1 (fall frost), then average those
+  // dates across years — the same logic climate-normal frost date
+  // tools use, just computed client-side instead of from a table.
+  // ---------------------------------------------------------------
+  function computeHistoricalFrostDates(lat, lon){
+    var endYear = new Date().getFullYear() - 1;
+    var startYear = endYear - 14;
+    var url = "https://archive-api.open-meteo.com/v1/archive?latitude=" + lat + "&longitude=" + lon +
+      "&start_date=" + startYear + "-01-01&end_date=" + endYear + "-12-31" +
+      "&daily=temperature_2m_min&temperature_unit=fahrenheit&timezone=auto";
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 12000);
+    return fetch(url, {signal: controller.signal})
+      .then(function(resp){
+        clearTimeout(timer);
+        if(!resp.ok) return null;
+        return resp.json();
+      })
+      .then(function(data){
+        if(!data || !data.daily || !data.daily.time || !data.daily.temperature_2m_min) return null;
+        var times = data.daily.time;
+        var mins = data.daily.temperature_2m_min;
+
+        var byYear = {};
+        for(var i=0;i<times.length;i++){
+          var v = mins[i];
+          if(v === null || v === undefined) continue;
+          var parts = times[i].split("-");
+          var y = parseInt(parts[0],10), mo = parseInt(parts[1],10), da = parseInt(parts[2],10);
+          if(!byYear[y]) byYear[y] = [];
+          byYear[y].push({month:mo, day:da, min:v});
+        }
+
+        var springDeltas = [];
+        var fallDeltas = [];
+        var yearsSeen = 0;
+        Object.keys(byYear).forEach(function(yStr){
+          yearsSeen++;
+          var y = parseInt(yStr,10);
+          var jan1 = new Date(y,0,1);
+          var lastSpring = null, firstFall = null;
+          byYear[yStr].forEach(function(r){
+            if(r.min > 32) return;
+            var d = new Date(y, r.month-1, r.day);
+            if(r.month <= 6){
+              if(!lastSpring || d > lastSpring) lastSpring = d;
+            } else {
+              if(!firstFall || d < firstFall) firstFall = d;
+            }
+          });
+          if(lastSpring) springDeltas.push(Math.round((lastSpring - jan1)/86400000));
+          if(firstFall) fallDeltas.push(Math.round((firstFall - jan1)/86400000));
+        });
+
+        // Require frost in most years to trust the estimate — a
+        // near-frost-free climate (e.g. zone 10) won't have enough
+        // signal, and manual entry is the honest fallback there.
+        if(yearsSeen < 5 || springDeltas.length < yearsSeen * 0.5 || fallDeltas.length < yearsSeen * 0.5){
+          return null;
+        }
+
+        function avg(arr){ return arr.reduce(function(a,b){ return a+b; }, 0) / arr.length; }
+        var REF = 2024; // leap year, safe for day-of-year arithmetic
+        var lastFrostDate = new Date(REF, 0, 1 + Math.round(avg(springDeltas)));
+        var firstFrostDate = new Date(REF, 0, 1 + Math.round(avg(fallDeltas)));
+
+        return { lastFrost: lastFrostDate, firstFrost: firstFrostDate, yearsUsed: yearsSeen };
+      })
+      .catch(function(){ clearTimeout(timer); return null; });
+  }
+
+  // ---------------------------------------------------------------
   // State
   // ---------------------------------------------------------------
   var state = {
@@ -585,6 +662,12 @@
     window.scrollTo({top:0, behavior:"smooth"});
   }
 
+  function toDateInputValue(d){
+    var mo = String(d.getMonth() + 1).padStart(2, "0");
+    var da = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + mo + "-" + da;
+  }
+
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
       return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c];
@@ -610,17 +693,40 @@
 
     Promise.all([geocodeZip(zip), tryFetchAlmanacFrostDates(zip)]).then(function(results){
       state.location = results[0];
-      loadingText.classList.add("hidden");
-      zipForm.querySelector("button[type=submit]").disabled = false;
+      var almanacResult = results[1];
+      var historicalPromise = (state.location && state.location.lat != null && state.location.lon != null)
+        ? computeHistoricalFrostDates(state.location.lat, state.location.lon)
+        : Promise.resolve(null);
 
-      promptZoneChip.textContent = "Zone " + state.zone + " (detected from ZIP " + zip + ")";
-      promptLocationLine.textContent = state.location
-        ? "Near " + state.location.name + (state.location.admin1 ? ", " + state.location.admin1 : "")
-        : "";
-      lastFrostInput.value = "";
-      firstFrostInput.value = "";
-      frostError.textContent = "";
-      showScreen(promptScreen);
+      return historicalPromise.then(function(historical){
+        loadingText.classList.add("hidden");
+        zipForm.querySelector("button[type=submit]").disabled = false;
+
+        promptZoneChip.textContent = "Zone " + state.zone + " (detected from ZIP " + zip + ")";
+        promptLocationLine.textContent = state.location
+          ? "Near " + state.location.name + (state.location.admin1 ? ", " + state.location.admin1 : "")
+          : "";
+        frostError.textContent = "";
+
+        var almanacNote = document.getElementById("almanacNote");
+        var source = almanacResult || historical;
+        if(source){
+          var displayYear = new Date().getFullYear();
+          lastFrostInput.value = toDateInputValue(new Date(displayYear, source.lastFrost.getMonth(), source.lastFrost.getDate()));
+          firstFrostInput.value = toDateInputValue(new Date(displayYear, source.firstFrost.getMonth(), source.firstFrost.getDate()));
+          if(historical && !almanacResult){
+            almanacNote.innerHTML = "We estimated these dates from " + historical.yearsUsed +
+              " years of local historical weather data near " + escapeHtml(state.location.name) +
+              ". Adjust them below if you know your exact dates (see <a href=\"https://www.almanac.com/gardening/frostdates\" target=\"_blank\" rel=\"noopener\">almanac.com/gardening/frostdates</a>).";
+          }
+        } else {
+          lastFrostInput.value = "";
+          firstFrostInput.value = "";
+          almanacNote.innerHTML = "For the most accurate results, look up your frost dates at " +
+            "<a href=\"https://www.almanac.com/gardening/frostdates\" target=\"_blank\" rel=\"noopener\">almanac.com/gardening/frostdates</a> and enter them below.";
+        }
+        showScreen(promptScreen);
+      });
     });
   });
 
