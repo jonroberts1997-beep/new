@@ -442,7 +442,7 @@
       </div>
 
       <div class="legend">
-        <div class="legend-item"><span class="swatch green"></span> Start Indoors</div>
+        <div class="legend-item"><span class="swatch green"></span> Start Indoors / Undercover</div>
         <div class="legend-item"><span class="swatch yellow"></span> Transplant Outdoors</div>
         <div class="legend-item"><span class="swatch blue"></span> Direct Sow</div>
       </div>
@@ -465,7 +465,7 @@
   "use strict";
 
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  var CAT_LABEL = {green:"Start Indoors", yellow:"Transplant Outdoors", blue:"Direct Sow"};
+  var CAT_LABEL = {green:"Start Indoors / Undercover", yellow:"Transplant Outdoors", blue:"Direct Sow"};
 
   // ---------------------------------------------------------------
   // ZIP3 -> USDA zone lookup (built-in, approximate regional table)
@@ -667,19 +667,42 @@
     var monthData = [];
     for(var i=0;i<12;i++) monthData.push({green:[], yellow:[], blue:[]});
 
+    // Adds one entry to its month, skipping an exact duplicate (same
+    // crops+note) already present that month — this is what lets a
+    // succession series span several months as distinct cards while
+    // collapsing multiple hits inside one month into a single line.
     function addByDate(date, cat, crops, note){
       var idx = ((date.getMonth() % 12) + 12) % 12;
-      monthData[idx][cat].push({crops: crops, note: note});
+      var arr = monthData[idx][cat];
+      var exists = arr.some(function(e){ return e.crops === crops && e.note === note; });
+      if(!exists) arr.push({crops: crops, note: note});
+    }
+
+    // Repeats a sowing every `intervalWeeks` from startDate through
+    // endDate (inclusive), for crops that are planted in succession
+    // rather than just once.
+    function addSuccession(cropsLabel, cat, startDate, endDate, intervalWeeks, note){
+      if(endDate < startDate) return;
+      var d = new Date(startDate.getTime());
+      var guard = 0;
+      while(d <= endDate && guard < 20){
+        addByDate(d, cat, cropsLabel, note);
+        d = weeksAfter(d, intervalWeeks);
+        guard++;
+      }
     }
 
     var groups = [
       { crops:["Tomatoes","Peppers","Eggplant","Basil"], items:[
-        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors (6–8 wks before last frost)"},
+        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors or undercover (6–8 wks before last frost)"},
         {cat:"yellow", date:weeksAfter(lf,1), note:"Transplant outdoors after last frost"}
       ]},
       { crops:["Zucchini","Cucumbers","Squash","Melons"], items:[
-        {cat:"green", date:weeksBefore(lf,3.5), note:"Start indoors (3–4 wks before last frost)"},
+        {cat:"green", date:weeksBefore(lf,3.5), note:"Start indoors or undercover (3–4 wks before last frost)"},
         {cat:"blue", date:weeksAfter(lf,0.5), note:"Or direct sow after last frost"}
+      ]},
+      { crops:["Pumpkins","Winter Squash"], items:[
+        {cat:"blue", date:weeksBefore(ff,16), note:"Direct sow for a fall harvest (needs ~110 days)"}
       ]},
       { crops:["Beans","Corn"], items:[
         {cat:"blue", date:weeksAfter(lf,0.5), note:"Direct sow after last frost"}
@@ -687,31 +710,44 @@
       { crops:["Potatoes"], items:[
         {cat:"blue", date:weeksBefore(lf,3), note:"Plant seed potatoes (2–4 wks before last frost)"}
       ]},
-      { crops:["Kale","Broccoli","Cabbage","Cauliflower"], items:[
-        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors (6–8 wks before last frost)"},
+      { crops:["Sweet Potatoes"], items:[
+        {cat:"blue", date:weeksAfter(lf,3), note:"Plant slips once soil is warm (3–4 wks after last frost)"}
+      ]},
+      { crops:["Kale","Broccoli","Cabbage","Cauliflower","Brussels Sprouts"], items:[
+        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors or undercover (6–8 wks before last frost)"},
         {cat:"yellow", date:weeksBefore(lf,3), note:"Transplant outdoors (2–4 wks before last frost)"},
-        {cat:"green", date:new Date(lf.getFullYear(), 6, 15), note:"Start indoors again for fall crop"}
+        {cat:"green", date:new Date(lf.getFullYear(), 6, 15), note:"Start indoors or undercover again for a fall crop"},
+        {cat:"yellow", date:weeksBefore(ff,7), note:"Transplant fall crop outdoors (~7 wks before first frost)"}
       ]},
       { crops:["Lettuce","Spinach","Arugula"], items:[
-        {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"},
-        {cat:"blue", date:weeksBefore(ff,8), note:"Direct sow again for fall crop (late summer)"}
-      ]},
-      { crops:["Carrots","Beets","Radishes","Turnips"], items:[
-        {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"},
-        {cat:"blue", date:weeksBefore(ff,8), note:"Direct sow again for fall crop (late summer)"}
-      ]},
-      { crops:["Garlic"], items:[
-        {cat:"blue", date:new Date(ff.getFullYear(), 9, 15), note:"Plant cloves (October–November)"}
-      ]},
-      { crops:["Onions","Leeks"], items:[
-        {cat:"green", date:weeksBefore(lf,11), note:"Start indoors (10–12 wks before last frost)"}
-      ]},
-      { crops:["Peas"], items:[
         {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"}
       ]},
-      { crops:["Parsley","Cilantro","Dill"], items:[
+      { crops:["Swiss Chard"], items:[
+        {cat:"blue", date:weeksBefore(lf,2), note:"Direct sow (2 wks before last frost)"}
+      ]},
+      { crops:["Carrots","Beets","Radishes","Turnips"], items:[
+        {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"}
+      ]},
+      { crops:["Rutabaga"], items:[
+        {cat:"blue", date:weeksBefore(ff,12), note:"Direct sow for a fall/winter crop (~90 days)"}
+      ]},
+      { crops:["Garlic"], items:[
+        {cat:"blue", date:new Date(ff.getFullYear(), 9, 15), note:"Plant cloves (October–November)"},
+        {cat:"blue", date:new Date(ff.getFullYear(), 10, 5), note:"Plant cloves (October–November)"}
+      ]},
+      { crops:["Onions","Leeks","Celery"], items:[
+        {cat:"green", date:weeksBefore(lf,11), note:"Start indoors or undercover (10–12 wks before last frost)"}
+      ]},
+      { crops:["Asparagus"], items:[
+        {cat:"blue", date:weeksBefore(lf,2), note:"Plant crowns (perennial — plant once, harvest for years)"}
+      ]},
+      { crops:["Peas"], items:[
+        {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"},
+        {cat:"blue", date:weeksBefore(ff,9), note:"Direct sow again for a fall crop (~9 wks before first frost)"}
+      ]},
+      { crops:["Parsley","Dill"], items:[
         {cat:"blue", date:weeksAfter(lf,0.5), note:"Direct sow after last frost"},
-        {cat:"green", date:weeksBefore(lf,5), note:"Or start indoors (4–6 wks before last frost)"}
+        {cat:"green", date:weeksBefore(lf,5), note:"Or start indoors or undercover (4–6 wks before last frost)"}
       ]}
     ];
 
@@ -720,6 +756,49 @@
         addByDate(it.date, it.cat, g.crops.join(", "), it.note);
       });
     });
+
+    // ---- Succession sowings: same crop, planted every few weeks
+    // across the season so nothing planted in May stops there, and
+    // fast-growing crops keep going through summer.
+    addSuccession("Beans, Corn", "blue", weeksAfter(lf,0.5), weeksBefore(ff,9), 3,
+      "Direct sow (succession every 2–3 wks for continuous harvest)");
+    addSuccession("Okra", "blue", weeksAfter(lf,2), weeksBefore(ff,10), 4,
+      "Direct sow once soil is warm (succession optional)");
+    addSuccession("Zucchini, Cucumbers, Squash, Melons", "blue", weeksAfter(lf,0.5), weeksBefore(ff,9), 3,
+      "Direct sow (succession every 2–3 wks for a steady harvest)");
+    addSuccession("Basil", "blue", weeksAfter(lf,2), weeksBefore(ff,8), 4,
+      "Direct sow more (succession every 3–4 wks)");
+    addSuccession("Lettuce, Spinach, Arugula", "blue", weeksBefore(lf,5), weeksAfter(lf,3), 2,
+      "Direct sow (succession every 2 wks while weather is cool)");
+    addSuccession("Lettuce, Spinach, Arugula", "blue", weeksBefore(ff,8), weeksBefore(ff,4), 2,
+      "Direct sow again for a fall crop (succession every 2 wks)");
+    addSuccession("Swiss Chard", "blue", weeksBefore(lf,2), weeksBefore(ff,8), 5,
+      "Direct sow (heat-tolerant, succession through summer)");
+    addSuccession("Carrots, Beets, Radishes, Turnips", "blue", weeksBefore(lf,5), weeksAfter(lf,3), 2,
+      "Direct sow (succession every 2–3 wks)");
+    addSuccession("Carrots, Beets, Radishes, Turnips", "blue", weeksBefore(ff,10), weeksBefore(ff,6), 2,
+      "Direct sow again for a fall crop (succession every 2 wks)");
+    addSuccession("Green Onions (Scallions)", "blue", weeksBefore(lf,2), weeksBefore(ff,6), 3,
+      "Direct sow (quick-growing, succession every 3 wks)");
+    addSuccession("Cilantro", "blue", weeksAfter(lf,2), weeksBefore(ff,8), 3,
+      "Direct sow more (succession every 3 wks — bolts quickly in heat)");
+
+    // A second potato planting for a fall crop, only if there's enough
+    // season left for it to mature (~10 wks) after it goes in.
+    var potato2 = weeksAfter(lf,10);
+    if(potato2 <= weeksBefore(ff,10)){
+      addByDate(potato2, "blue", "Potatoes", "Second planting for a fall crop (mild-winter climates)");
+    }
+
+    // Guarantee every month has at least one real planting task —
+    // microgreens can be started indoors any time of year in a couple
+    // of weeks, so they're the honest fallback for an otherwise-quiet month.
+    for(var m=0;m<12;m++){
+      var md = monthData[m];
+      if(!md.green.length && !md.yellow.length && !md.blue.length){
+        md.green.push({crops:"Microgreens", note:"Start indoors or undercover anytime — ready to harvest in 1–3 wks"});
+      }
+    }
 
     return monthData;
   }
