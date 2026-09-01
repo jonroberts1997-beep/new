@@ -367,7 +367,7 @@
 <div class="wrap">
   <header class="brand">
     <p class="brand-name">Radical Gardening</p>
-    <p class="brand-tagline">Grow your own food. For good.</p>
+    <p class="brand-tagline">Learn how to grow your own food.</p>
   </header>
 
   <!-- ===================== LANDING SCREEN ===================== -->
@@ -987,10 +987,27 @@
       margin: 0.4,
       filename: "radical-gardening-calendar-" + (state.zip || "calendar") + ".pdf",
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "in", format: "letter", orientation: "landscape" }
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: target.scrollWidth,
+        windowHeight: target.scrollHeight
+      },
+      jsPDF: { unit: "in", format: "letter", orientation: "landscape" },
+      pagebreak: { mode: ["css", "legacy"], avoid: [".month-card", ".summary-bar", ".highlight-box", ".legend"] }
     };
-    window.html2pdf().set(opt).from(target).save();
+    // The button sits below a long page (12 month cards) — if we capture
+    // while the page is scrolled down, html2canvas renders that scroll
+    // offset as blank leading pages and then runs out of room before the
+    // real content ends. Reset scroll and wait a paint frame first.
+    window.scrollTo(0, 0);
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        window.html2pdf().set(opt).from(target).save();
+      });
+    });
   });
 
   startOverBtn.addEventListener("click", function(){
