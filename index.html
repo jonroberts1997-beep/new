@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radical Gardening — Planting Calendar</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root{
+    --green:#2D5A1B;
+    --green-dark:#20400f;
+    --green-light:#eaf1e5;
+    --yellow:#c8860a;
+    --yellow-light:#fbf1de;
+    --blue:#26648f;
+    --blue-light:#e7f1f9;
+    --text:#232323;
+    --muted:#6c6f68;
+    --border:#e2e4de;
+    --bg:#f4f5f1;
+    --radius:12px;
+    --font: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font);
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .hidden{display:none !important;}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
+
+  /* ---------- Header / Brand ---------- */
+  .brand{
+    text-align:center;
+    padding:36px 20px 10px;
+  }
+  .brand-name{
+    font-size:2rem;
+    font-weight:800;
+    color:var(--green);
+    letter-spacing:0.5px;
+    margin:0;
+  }
+  .brand-tagline{
+    color:var(--muted);
+    font-size:1rem;
+    font-weight:500;
+    margin:6px 0 0;
+  }
+
+  /* ---------- Landing screen ---------- */
+  .landing-card{
+    max-width:480px;
+    margin:30px auto 0;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:36px 32px;
+    box-shadow:0 4px 18px rgba(45,90,27,0.07);
+    text-align:center;
+  }
+  .landing-desc{
+    color:var(--muted);
+    font-size:0.98rem;
+    margin:0 0 24px;
+  }
+  .field-label{
+    display:block;
+    text-align:left;
+    font-weight:600;
+    font-size:0.85rem;
+    color:var(--text);
+    margin-bottom:6px;
+  }
+  input[type="text"], input[type="date"]{
+    width:100%;
+    padding:12px 14px;
+    font-size:1.05rem;
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    font-family:var(--font);
+    color:var(--text);
+    background:#fff;
+  }
+  input[type="text"]:focus, input[type="date"]:focus{
+    outline:none;
+    border-color:var(--green);
+  }
+  .btn{
+    display:inline-block;
+    border:none;
+    border-radius:8px;
+    padding:14px 28px;
+    font-size:1.02rem;
+    font-weight:700;
+    font-family:var(--font);
+    cursor:pointer;
+    transition:background .15s ease, transform .05s ease;
+  }
+  .btn-primary{
+    background:var(--green);
+    color:#fff;
+    width:100%;
+    margin-top:18px;
+  }
+  .btn-primary:hover{background:var(--green-dark);}
+  .btn-primary:active{transform:scale(0.99);}
+  .btn-secondary{
+    background:#fff;
+    color:var(--green);
+    border:1.5px solid var(--green);
+  }
+  .btn-secondary:hover{background:var(--green-light);}
+  .error-text{
+    color:#b3261e;
+    font-size:0.85rem;
+    margin-top:8px;
+    min-height:1.1em;
+    text-align:left;
+  }
+  .loading-text{
+    color:var(--muted);
+    font-size:0.9rem;
+    margin-top:14px;
+  }
+
+  /* ---------- Frost date prompt screen ---------- */
+  .prompt-card{
+    max-width:480px;
+    margin:30px auto 0;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:32px;
+    box-shadow:0 4px 18px rgba(45,90,27,0.07);
+  }
+  .zone-chip{
+    display:inline-block;
+    background:var(--green-light);
+    color:var(--green-dark);
+    font-weight:700;
+    font-size:0.85rem;
+    padding:6px 12px;
+    border-radius:20px;
+    margin-bottom:14px;
+  }
+  .almanac-note{
+    background:var(--yellow-light);
+    border:1px solid #f0dcb0;
+    border-radius:8px;
+    padding:14px 16px;
+    font-size:0.92rem;
+    color:#5c4408;
+    margin-bottom:22px;
+  }
+  .almanac-note a{color:var(--green-dark);font-weight:600;}
+  .date-field{margin-bottom:18px;}
+  .prompt-actions{display:flex;gap:10px;margin-top:6px;}
+  .prompt-actions .btn-secondary{flex:0 0 auto;padding:14px 18px;}
+  .prompt-actions .btn-primary{flex:1;margin-top:0;}
+
+  /* ---------- Results screen ---------- */
+  .summary-bar{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:24px 28px;
+    margin-bottom:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.03);
+  }
+  .summary-top{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .summary-stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:28px;
+  }
+  .stat{min-width:120px;}
+  .stat-label{
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:2px;
+  }
+  .stat-value{
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--green-dark);
+  }
+  .season-sentence{
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+    color:var(--text);
+    font-size:0.95rem;
+  }
+  .location-line{
+    color:var(--muted);
+    font-size:0.82rem;
+    margin-top:4px;
+  }
+
+  .highlight-box{
+    background:var(--green);
+    color:#fff;
+    border-radius:var(--radius);
+    padding:22px 28px;
+    margin-bottom:24px;
+  }
+  .highlight-box h2{
+    margin:0 0 12px;
+    font-size:1.1rem;
+    font-weight:700;
+  }
+  .highlight-box .hl-empty{
+    font-size:0.95rem;
+    opacity:0.92;
+  }
+  .hl-cats{display:flex;flex-wrap:wrap;gap:22px;}
+  .hl-cat{min-width:200px;flex:1;}
+  .hl-cat-title{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-weight:700;
+    opacity:0.85;
+    margin-bottom:6px;
+  }
+  .hl-cat ul{margin:0;padding-left:18px;font-size:0.92rem;}
+  .hl-cat li{margin-bottom:4px;}
+
+  /* legend */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+    align-items:center;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px 20px;
+    margin-bottom:22px;
+    font-size:0.88rem;
+  }
+  .legend-item{display:flex;align-items:center;gap:8px;font-weight:600;}
+  .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;}
+  .swatch.green{background:var(--green);}
+  .swatch.yellow{background:var(--yellow);}
+  .swatch.blue{background:var(--blue);}
+
+  /* calendar grid */
+  .calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(255px, 1fr));
+    gap:16px;
+  }
+  .month-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 18px 18px;
+  }
+  .month-card.is-current{
+    border:2px solid var(--green);
+    box-shadow:0 2px 12px rgba(45,90,27,0.15);
+  }
+  .month-card h3{
+    margin:0 0 10px;
+    font-size:1.05rem;
+    font-weight:700;
+    color:var(--green-dark);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .now-badge{
+    background:var(--green);
+    color:#fff;
+    font-size:0.62rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    padding:2px 7px;
+    border-radius:10px;
+  }
+  .cat{
+    border-radius:8px;
+    padding:8px 10px;
+    margin-bottom:8px;
+  }
+  .cat-green{background:var(--green-light);}
+  .cat-yellow{background:var(--yellow-light);}
+  .cat-blue{background:var(--blue-light);}
+  .cat-label{
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .cat-green .cat-label{color:var(--green-dark);}
+  .cat-yellow .cat-label{color:var(--yellow);}
+  .cat-blue .cat-label{color:var(--blue);}
+  .cat ul{margin:0;padding-left:16px;font-size:0.86rem;}
+  .cat li{margin-bottom:3px;}
+  .empty{color:var(--muted);font-size:0.85rem;font-style:italic;margin:4px 0 0;}
+
+  .action-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    justify-content:center;
+    margin-top:32px;
+  }
+  .action-bar .btn{min-width:170px;}
+  .btn-outline{
+    background:#fff;
+    color:var(--green);
+    border:1.5px solid var(--green);
+  }
+  .btn-outline:hover{background:var(--green-light);}
+  .btn-ghost{
+    background:transparent;
+    color:var(--muted);
+    border:1.5px solid var(--border);
+  }
+  .btn-ghost:hover{border-color:var(--muted);color:var(--text);}
+
+  footer.app-footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.78rem;
+    margin-top:40px;
+  }
+
+  @media (max-width:640px){
+    .brand-name{font-size:1.6rem;}
+    .landing-card,.prompt-card{padding:26px 20px;}
+    .summary-top{flex-direction:column;align-items:flex-start;}
+    .calendar-grid{grid-template-columns:1fr;}
+    .action-bar .btn{width:100%;}
+  }
+
+  @media print{
+    body{background:#fff;}
+    .no-print{display:none !important;}
+    .wrap{padding:0;max-width:100%;}
+    .month-card{break-inside:avoid;}
+    .highlight-box{background:#fff !important;color:var(--text) !important;border:1.5px solid var(--green);}
+    .calendar-grid{grid-template-columns:repeat(3,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="brand">
+    <p class="brand-name">Radical Gardening</p>
+    <p class="brand-tagline">Grow your own food. For good.</p>
+  </header>
+
+  <!-- ===================== LANDING SCREEN ===================== -->
+  <section id="landingScreen">
+    <div class="landing-card">
+      <p class="landing-desc">Enter your ZIP code to get a personalized month by month planting calendar for your climate.</p>
+      <form id="zipForm" novalidate>
+        <label class="field-label" for="zipInput">ZIP code</label>
+        <input type="text" id="zipInput" inputmode="numeric" maxlength="5" placeholder="e.g. 97214" autocomplete="postal-code">
+        <div class="error-text" id="zipError"></div>
+        <button type="submit" class="btn btn-primary">Get My Planting Calendar</button>
+        <div class="loading-text hidden" id="loadingText">Looking up your zone and frost data…</div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================== FROST DATE PROMPT SCREEN ===================== -->
+  <section id="promptScreen" class="hidden">
+    <div class="prompt-card">
+      <span class="zone-chip" id="promptZoneChip">Zone —</span>
+      <div class="location-line" id="promptLocationLine"></div>
+      <div class="almanac-note">
+        For the most accurate results, look up your frost dates at
+        <a href="https://www.almanac.com/gardening/frostdates" target="_blank" rel="noopener">almanac.com/gardening/frostdates</a>
+        and enter them below.
+      </div>
+      <form id="frostForm" novalidate>
+        <div class="date-field">
+          <label class="field-label" for="lastFrostInput">My last spring frost date</label>
+          <input type="date" id="lastFrostInput" required>
+        </div>
+        <div class="date-field">
+          <label class="field-label" for="firstFrostInput">My first fall frost date</label>
+          <input type="date" id="firstFrostInput" required>
+        </div>
+        <div class="error-text" id="frostError"></div>
+        <div class="prompt-actions">
+          <button type="button" class="btn btn-secondary" id="backToZipBtn">Back</button>
+          <button type="submit" class="btn btn-primary">Generate My Calendar</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTS SCREEN ===================== -->
+  <section id="resultsScreen" class="hidden">
+    <div id="pdfContent">
+      <div class="summary-bar">
+        <div class="summary-top">
+          <div class="summary-stats">
+            <div class="stat">
+              <div class="stat-label">USDA Zone</div>
+              <div class="stat-value" id="sumZone">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Last Spring Frost</div>
+              <div class="stat-value" id="sumLastFrost">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">First Fall Frost</div>
+              <div class="stat-value" id="sumFirstFrost">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="location-line" id="sumLocation"></div>
+        <p class="season-sentence" id="sumSeasonSentence"></p>
+      </div>
+
+      <div class="highlight-box">
+        <h2 id="hlTitle">What to do this month</h2>
+        <div id="hlBody"></div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="swatch green"></span> Start Indoors</div>
+        <div class="legend-item"><span class="swatch yellow"></span> Transplant Outdoors</div>
+        <div class="legend-item"><span class="swatch blue"></span> Direct Sow</div>
+      </div>
+
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <div class="action-bar no-print">
+      <button class="btn btn-outline" id="printBtn">Print Calendar</button>
+      <button class="btn btn-outline" id="pdfBtn">Download as PDF</button>
+      <button class="btn btn-ghost" id="startOverBtn">Start Over</button>
+    </div>
+  </section>
+
+  <footer class="app-footer no-print">Radical Gardening — planting calendar built for your local frost dates.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var CAT_LABEL = {green:"Start Indoors", yellow:"Transplant Outdoors", blue:"Direct Sow"};
+
+  // ---------------------------------------------------------------
+  // ZIP3 -> USDA zone lookup (built-in, approximate regional table)
+  // ---------------------------------------------------------------
+  var ZONE_RANGES = [
+    [0,5,10],[6,9,10],[10,27,6],[28,29,7],[30,38,5],[39,43,5],[44,49,4],[50,59,4],[60,69,6],[70,89,7],[90,99,7],
+    [100,119,7],[120,149,5],[150,196,6],[197,199,7],[200,205,7],[206,219,7],[220,246,7],[247,268,6],[269,269,7],
+    [270,289,7],[290,299,8],[300,319,7],[320,339,9],[340,349,10],[350,369,8],[370,385,7],[386,397,8],[398,399,8],
+    [400,427,6],[428,429,6],[430,459,6],[460,479,6],[480,499,5],
+    [500,528,5],[529,529,5],[530,549,4],[550,567,4],[568,569,4],[570,577,4],[578,579,4],[580,588,3],[589,589,3],[590,599,4],
+    [600,629,5],[630,658,6],[659,659,6],[660,679,6],[680,693,5],[694,699,5],
+    [700,714,9],[715,715,8],[716,729,7],[730,749,7],[750,779,8],[780,799,9],
+    [800,816,5],[817,819,5],[820,831,4],[832,838,6],[839,839,6],[840,847,6],[848,849,6],
+    [850,854,9],[855,857,7],[858,858,8],[859,865,8],[866,869,7],[870,884,6],[885,885,8],[886,888,6],
+    [889,891,6],[892,892,7],[893,898,9],[899,899,8],
+    [900,921,10],[922,928,9],[929,929,9],[930,950,9],[951,961,8],[962,966,9],[967,968,10],[969,969,10],
+    [970,974,8],[975,979,6],[980,986,8],[987,987,7],[988,994,6],[995,996,5],[997,999,3]
+  ];
+
+  function zipToZone(zip){
+    var z3 = parseInt(zip.slice(0,3), 10);
+    if(isNaN(z3)) return 6;
+    for(var i=0;i<ZONE_RANGES.length;i++){
+      if(z3 >= ZONE_RANGES[i][0] && z3 <= ZONE_RANGES[i][1]) return ZONE_RANGES[i][2];
+    }
+    return 6;
+  }
+
+  // ---------------------------------------------------------------
+  // Open-Meteo geocoding (best-effort location lookup for display)
+  // ---------------------------------------------------------------
+  function geocodeZip(zip){
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 5000);
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(zip) + "&count=1&language=en&format=json", {signal: controller.signal})
+      .then(function(resp){
+        clearTimeout(timer);
+        if(!resp.ok) return null;
+        return resp.json();
+      })
+      .then(function(data){
+        if(data && data.results && data.results.length){
+          var r = data.results[0];
+          return {name:r.name, admin1:r.admin1 || "", country:r.country_code || "", lat:r.latitude, lon:r.longitude};
+        }
+        return null;
+      })
+      .catch(function(){ clearTimeout(timer); return null; });
+  }
+
+  // ---------------------------------------------------------------
+  // Farmers' Almanac frost date lookup attempt (blocked by CORS in
+  // virtually all browsers when called client-side — we fall back to
+  // manual entry when this fails, as instructed).
+  // ---------------------------------------------------------------
+  function tryFetchAlmanacFrostDates(zip){
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 5000);
+    return fetch("https://www.almanac.com/gardening/frostdates/zipcode/" + encodeURIComponent(zip), {signal: controller.signal, mode: "cors"})
+      .then(function(resp){
+        clearTimeout(timer);
+        if(!resp.ok) return null;
+        return resp.text();
+      })
+      .then(function(html){
+        if(!html) return null;
+        return null; // no reliable structured parse available client-side; use manual fallback
+      })
+      .catch(function(){ clearTimeout(timer); return null; });
+  }
+
+  // ---------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------
+  var state = {
+    zip: "",
+    zone: null,
+    location: null
+  };
+
+  // ---------------------------------------------------------------
+  // Elements
+  // ---------------------------------------------------------------
+  var landingScreen = document.getElementById("landingScreen");
+  var promptScreen = document.getElementById("promptScreen");
+  var resultsScreen = document.getElementById("resultsScreen");
+
+  var zipForm = document.getElementById("zipForm");
+  var zipInput = document.getElementById("zipInput");
+  var zipError = document.getElementById("zipError");
+  var loadingText = document.getElementById("loadingText");
+
+  var promptZoneChip = document.getElementById("promptZoneChip");
+  var promptLocationLine = document.getElementById("promptLocationLine");
+  var frostForm = document.getElementById("frostForm");
+  var lastFrostInput = document.getElementById("lastFrostInput");
+  var firstFrostInput = document.getElementById("firstFrostInput");
+  var frostError = document.getElementById("frostError");
+  var backToZipBtn = document.getElementById("backToZipBtn");
+
+  var sumZone = document.getElementById("sumZone");
+  var sumLastFrost = document.getElementById("sumLastFrost");
+  var sumFirstFrost = document.getElementById("sumFirstFrost");
+  var sumLocation = document.getElementById("sumLocation");
+  var sumSeasonSentence = document.getElementById("sumSeasonSentence");
+  var hlTitle = document.getElementById("hlTitle");
+  var hlBody = document.getElementById("hlBody");
+  var calendarGrid = document.getElementById("calendarGrid");
+
+  var printBtn = document.getElementById("printBtn");
+  var pdfBtn = document.getElementById("pdfBtn");
+  var startOverBtn = document.getElementById("startOverBtn");
+
+  function showScreen(el){
+    [landingScreen, promptScreen, resultsScreen].forEach(function(s){ s.classList.add("hidden"); });
+    el.classList.remove("hidden");
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c];
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // ZIP submit
+  // ---------------------------------------------------------------
+  zipForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var zip = zipInput.value.trim();
+    zipError.textContent = "";
+    if(!/^\d{5}$/.test(zip)){
+      zipError.textContent = "Please enter a valid 5-digit ZIP code.";
+      return;
+    }
+    state.zip = zip;
+    state.zone = zipToZone(zip);
+
+    loadingText.classList.remove("hidden");
+    zipForm.querySelector("button[type=submit]").disabled = true;
+
+    Promise.all([geocodeZip(zip), tryFetchAlmanacFrostDates(zip)]).then(function(results){
+      state.location = results[0];
+      loadingText.classList.add("hidden");
+      zipForm.querySelector("button[type=submit]").disabled = false;
+
+      promptZoneChip.textContent = "Zone " + state.zone + " (detected from ZIP " + zip + ")";
+      promptLocationLine.textContent = state.location
+        ? "Near " + state.location.name + (state.location.admin1 ? ", " + state.location.admin1 : "")
+        : "";
+      lastFrostInput.value = "";
+      firstFrostInput.value = "";
+      frostError.textContent = "";
+      showScreen(promptScreen);
+    });
+  });
+
+  backToZipBtn.addEventListener("click", function(){
+    showScreen(landingScreen);
+  });
+
+  // ---------------------------------------------------------------
+  // Frost date submit -> build calendar
+  // ---------------------------------------------------------------
+  frostForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    frostError.textContent = "";
+    if(!lastFrostInput.value || !firstFrostInput.value){
+      frostError.textContent = "Please enter both frost dates.";
+      return;
+    }
+    var rawLF = new Date(lastFrostInput.value + "T00:00:00");
+    var rawFF = new Date(firstFrostInput.value + "T00:00:00");
+    if(isNaN(rawLF) || isNaN(rawFF)){
+      frostError.textContent = "Please enter valid dates.";
+      return;
+    }
+
+    // Normalize both dates onto a shared reference year so the fall
+    // frost date always falls after the spring frost date, regardless
+    // of what year the date pickers defaulted to.
+    var REF_YEAR = 2024;
+    var lf = new Date(REF_YEAR, rawLF.getMonth(), rawLF.getDate());
+    var ff = new Date(REF_YEAR, rawFF.getMonth(), rawFF.getDate());
+    if(ff <= lf){ ff = new Date(REF_YEAR + 1, rawFF.getMonth(), rawFF.getDate()); }
+
+    renderResults(lf, ff);
+    showScreen(resultsScreen);
+  });
+
+  // ---------------------------------------------------------------
+  // Calendar generation
+  // ---------------------------------------------------------------
+  function weeksBefore(d, w){ return new Date(d.getTime() - w * 7 * 86400000); }
+  function weeksAfter(d, w){ return new Date(d.getTime() + w * 7 * 86400000); }
+
+  function buildMonthData(lf, ff){
+    var monthData = [];
+    for(var i=0;i<12;i++) monthData.push({green:[], yellow:[], blue:[]});
+
+    function addByDate(date, cat, crops, note){
+      var idx = ((date.getMonth() % 12) + 12) % 12;
+      monthData[idx][cat].push({crops: crops, note: note});
+    }
+
+    var groups = [
+      { crops:["Tomatoes","Peppers","Eggplant","Basil"], items:[
+        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors (6–8 wks before last frost)"},
+        {cat:"yellow", date:weeksAfter(lf,1), note:"Transplant outdoors after last frost"}
+      ]},
+      { crops:["Zucchini","Cucumbers","Squash","Melons"], items:[
+        {cat:"green", date:weeksBefore(lf,3.5), note:"Start indoors (3–4 wks before last frost)"},
+        {cat:"blue", date:weeksAfter(lf,0.5), note:"Or direct sow after last frost"}
+      ]},
+      { crops:["Beans","Corn"], items:[
+        {cat:"blue", date:weeksAfter(lf,0.5), note:"Direct sow after last frost"}
+      ]},
+      { crops:["Potatoes"], items:[
+        {cat:"blue", date:weeksBefore(lf,3), note:"Plant seed potatoes (2–4 wks before last frost)"}
+      ]},
+      { crops:["Kale","Broccoli","Cabbage","Cauliflower"], items:[
+        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors (6–8 wks before last frost)"},
+        {cat:"yellow", date:weeksBefore(lf,3), note:"Transplant outdoors (2–4 wks before last frost)"},
+        {cat:"green", date:new Date(lf.getFullYear(), 6, 15), note:"Start indoors again for fall crop"}
+      ]},
+      { crops:["Lettuce","Spinach","Arugula"], items:[
+        {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"},
+        {cat:"blue", date:weeksBefore(ff,8), note:"Direct sow again for fall crop (late summer)"}
+      ]},
+      { crops:["Carrots","Beets","Radishes","Turnips"], items:[
+        {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"},
+        {cat:"blue", date:weeksBefore(ff,8), note:"Direct sow again for fall crop (late summer)"}
+      ]},
+      { crops:["Garlic"], items:[
+        {cat:"blue", date:new Date(ff.getFullYear(), 9, 15), note:"Plant cloves (October–November)"}
+      ]},
+      { crops:["Onions","Leeks"], items:[
+        {cat:"green", date:weeksBefore(lf,11), note:"Start indoors (10–12 wks before last frost)"}
+      ]},
+      { crops:["Peas"], items:[
+        {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"}
+      ]},
+      { crops:["Parsley","Cilantro","Dill"], items:[
+        {cat:"blue", date:weeksAfter(lf,0.5), note:"Direct sow after last frost"},
+        {cat:"green", date:weeksBefore(lf,5), note:"Or start indoors (4–6 wks before last frost)"}
+      ]}
+    ];
+
+    groups.forEach(function(g){
+      g.items.forEach(function(it){
+        addByDate(it.date, it.cat, g.crops.join(", "), it.note);
+      });
+    });
+
+    return monthData;
+  }
+
+  function formatDate(d){
+    return MONTHS[d.getMonth()] + " " + d.getDate();
+  }
+
+  function renderResults(lf, ff){
+    sumZone.textContent = "Zone " + state.zone;
+    sumLastFrost.textContent = formatDate(lf);
+    sumFirstFrost.textContent = formatDate(ff);
+    sumLocation.textContent = state.location
+      ? "Near " + state.location.name + (state.location.admin1 ? ", " + state.location.admin1 : "") + " · ZIP " + state.zip
+      : "ZIP " + state.zip;
+
+    var seasonDays = Math.round((ff - lf) / 86400000);
+    sumSeasonSentence.textContent = "Your growing season runs about " + seasonDays + " days, from " +
+      formatDate(lf) + " to " + formatDate(ff) + ".";
+
+    var monthData = buildMonthData(lf, ff);
+    var todayMonth = new Date().getMonth();
+
+    // Highlight box
+    hlTitle.textContent = "What to do this month — " + MONTHS[todayMonth];
+    var cur = monthData[todayMonth];
+    if(!cur.green.length && !cur.yellow.length && !cur.blue.length){
+      hlBody.innerHTML = '<p class="hl-empty">No major planting tasks this month — a good time for weeding, watering, and harvesting.</p>';
+    } else {
+      var html = '<div class="hl-cats">';
+      ["green","yellow","blue"].forEach(function(cat){
+        if(cur[cat].length){
+          html += '<div class="hl-cat"><div class="hl-cat-title">' + CAT_LABEL[cat] + '</div><ul>';
+          cur[cat].forEach(function(entry){
+            html += "<li>" + escapeHtml(entry.crops) + " — " + escapeHtml(entry.note) + "</li>";
+          });
+          html += "</ul></div>";
+        }
+      });
+      html += "</div>";
+      hlBody.innerHTML = html;
+    }
+
+    // Full grid
+    var gridHtml = "";
+    for(var i=0;i<12;i++){
+      var d = monthData[i];
+      var isCurrent = (i === todayMonth);
+      gridHtml += '<div class="month-card' + (isCurrent ? " is-current" : "") + '">';
+      gridHtml += "<h3>" + MONTHS[i] + (isCurrent ? '<span class="now-badge">Now</span>' : "") + "</h3>";
+      ["green","yellow","blue"].forEach(function(cat){
+        if(d[cat].length){
+          gridHtml += '<div class="cat cat-' + cat + '"><div class="cat-label">' + CAT_LABEL[cat] + '</div><ul>';
+          d[cat].forEach(function(entry){
+            gridHtml += "<li><strong>" + escapeHtml(entry.crops) + "</strong> — " + escapeHtml(entry.note) + "</li>";
+          });
+          gridHtml += "</ul></div>";
+        }
+      });
+      if(!d.green.length && !d.yellow.length && !d.blue.length){
+        gridHtml += '<p class="empty">No scheduled planting tasks.</p>';
+      }
+      gridHtml += "</div>";
+    }
+    calendarGrid.innerHTML = gridHtml;
+  }
+
+  // ---------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------
+  printBtn.addEventListener("click", function(){ window.print(); });
+
+  pdfBtn.addEventListener("click", function(){
+    if(!window.html2pdf){
+      alert("The PDF library couldn't load (no internet connection?). Use \"Print Calendar\" and choose \"Save as PDF\" as the printer instead.");
+      return;
+    }
+    var target = document.getElementById("pdfContent");
+    var opt = {
+      margin: 0.4,
+      filename: "radical-gardening-calendar-" + (state.zip || "calendar") + ".pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: "in", format: "letter", orientation: "landscape" }
+    };
+    window.html2pdf().set(opt).from(target).save();
+  });
+
+  startOverBtn.addEventListener("click", function(){
+    zipInput.value = "";
+    zipError.textContent = "";
+    state = { zip:"", zone:null, location:null };
+    showScreen(landingScreen);
+  });
+
+})();
+</script>
+</body>
+</html>
