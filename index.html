@@ -547,11 +547,11 @@
       <button class="btn btn-outline" id="pdfBtn">Download as PDF</button>
       <button class="btn btn-ghost" id="startOverBtn">Start Over</button>
     </div>
-  </section>
 
-  <div class="book-call-bar bottom no-print">
-    <a class="book-call-btn" href="https://radical-gardening.com/start" target="_blank" rel="noopener noreferrer">Book a Garden Strategy Call</a>
-  </div>
+    <div class="book-call-bar bottom no-print">
+      <a class="book-call-btn" href="https://radical-gardening.com/start" target="_blank" rel="noopener noreferrer">Book a Garden Strategy Call</a>
+    </div>
+  </section>
 
   <footer class="app-footer no-print">Radical Gardening — planting calendar built for your local frost dates.</footer>
 </div>
@@ -660,21 +660,42 @@
   // ---------------------------------------------------------------
   // Open-Meteo geocoding (best-effort location lookup for display)
   // ---------------------------------------------------------------
+  // Rough lat/lon envelope covering the US (CONUS + AK/HI/PR) — used to
+  // catch a geocoding mismatch (wrong place entirely), not to validate
+  // precise location.
+  function isUSBoundingBox(lat, lon){
+    return lat >= 17 && lat <= 72 && lon >= -180 && lon <= -65;
+  }
+
   function geocodeZip(zip){
     var controller = new AbortController();
     var timer = setTimeout(function(){ controller.abort(); }, 5000);
-    return fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(zip) + "&count=1&language=en&format=json", {signal: controller.signal})
+    // Ask for several candidates rather than trusting whatever the API
+    // ranks first — a bare 5-digit query can match a same-named place
+    // with no relation to the ZIP, so we explicitly prefer a US result.
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(zip) + "&count=10&language=en&format=json", {signal: controller.signal})
       .then(function(resp){
         clearTimeout(timer);
         if(!resp.ok) return null;
         return resp.json();
       })
       .then(function(data){
-        if(data && data.results && data.results.length){
-          var r = data.results[0];
-          return {name:r.name, admin1:r.admin1 || "", country:r.country_code || "", lat:r.latitude, lon:r.longitude};
+        if(!data || !data.results || !data.results.length) return null;
+        var results = data.results;
+        var best = null;
+        for(var i=0;i<results.length;i++){
+          if((results[i].country_code || "").toUpperCase() === "US"){ best = results[i]; break; }
         }
-        return null;
+        if(!best) best = results[0];
+        var trusted = (best.country_code || "").toUpperCase() === "US" && isUSBoundingBox(best.latitude, best.longitude);
+        return {
+          name: best.name,
+          admin1: best.admin1 || "",
+          country: best.country_code || "",
+          lat: best.latitude,
+          lon: best.longitude,
+          trusted: trusted
+        };
       })
       .catch(function(){ clearTimeout(timer); return null; });
   }
@@ -710,7 +731,22 @@
   // dates across years — the same logic climate-normal frost date
   // tools use, just computed client-side instead of from a table.
   // ---------------------------------------------------------------
-  function computeHistoricalFrostDates(lat, lon){
+  // Plausible growing-season length (days between last spring frost and
+  // first fall frost) per USDA zone, generous on both ends. If the
+  // computed historical estimate falls way outside this — usually a
+  // sign the geocoded coordinates are for the wrong place — we don't
+  // trust it and fall back to manual entry instead of presenting a
+  // silently wrong result.
+  var PLAUSIBLE_SEASON_DAYS = {
+    3:[45,165], 4:[75,185], 5:[105,205], 6:[125,225],
+    7:[145,245], 8:[165,275], 9:[195,315], 10:[225,365]
+  };
+  function isPlausibleSeason(zone, seasonDays){
+    var range = PLAUSIBLE_SEASON_DAYS[zone] || [45,365];
+    return seasonDays >= range[0] && seasonDays <= range[1];
+  }
+
+  function computeHistoricalFrostDates(lat, lon, zone){
     var endYear = new Date().getFullYear() - 1;
     var startYear = endYear - 14;
     var url = "https://archive-api.open-meteo.com/v1/archive?latitude=" + lat + "&longitude=" + lon +
@@ -771,6 +807,11 @@
         var REF = 2024; // leap year, safe for day-of-year arithmetic
         var lastFrostDate = new Date(REF, 0, 1 + Math.round(avg(springDeltas)));
         var firstFrostDate = new Date(REF, 0, 1 + Math.round(avg(fallDeltas)));
+
+        var seasonDays = Math.round((firstFrostDate - lastFrostDate) / 86400000);
+        if(!isPlausibleSeason(zone, seasonDays)){
+          return null;
+        }
 
         return { lastFrost: lastFrostDate, firstFrost: firstFrostDate, yearsUsed: yearsSeen };
       })
@@ -858,10 +899,15 @@
     zipForm.querySelector("button[type=submit]").disabled = true;
 
     Promise.all([geocodeZip(zip), tryFetchAlmanacFrostDates(zip)]).then(function(results){
-      state.location = results[0];
+      // An untrusted geocoding match (wrong country / clearly outside
+      // the US) is worse than no match at all — it would otherwise
+      // silently feed the wrong coordinates into the historical frost
+      // lookup and also mislabel the location on screen.
+      var geocoded = results[0];
+      state.location = (geocoded && geocoded.trusted) ? geocoded : null;
       var almanacResult = results[1];
-      var historicalPromise = (state.location && state.location.lat != null && state.location.lon != null)
-        ? computeHistoricalFrostDates(state.location.lat, state.location.lon)
+      var historicalPromise = state.location
+        ? computeHistoricalFrostDates(state.location.lat, state.location.lon, state.zone)
         : Promise.resolve(null);
 
       return historicalPromise.then(function(historical){
