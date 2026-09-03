@@ -400,7 +400,7 @@
 <div class="wrap">
   <header class="brand">
     <p class="brand-name">Radical Gardening</p>
-    <p class="brand-tagline">Learn how to grow your own food.</p>
+    <p class="brand-tagline">Learn to grow your own food. Plant the change.</p>
   </header>
 
   <!-- ===================== LANDING SCREEN ===================== -->
@@ -924,8 +924,7 @@
 
     var groups = [
       { crops:["Tomatoes","Peppers","Eggplant","Basil"], items:[
-        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors or undercover (6–8 wks before last frost)"},
-        {cat:"yellow", date:weeksAfter(lf,1), note:"Transplant outdoors after last frost"}
+        {cat:"green", date:weeksBefore(lf,7), note:"Start indoors or undercover (6–8 wks before last frost)"}
       ]},
       { crops:["Zucchini","Cucumbers","Squash","Melons"], items:[
         {cat:"green", date:weeksBefore(lf,3.5), note:"Start indoors or undercover (3–4 wks before last frost)"},
@@ -986,6 +985,19 @@
         addByDate(it.date, it.cat, g.crops.join(", "), it.note);
       });
     });
+
+    // Transplanting tomatoes/peppers/eggplant/basil isn't a single-day
+    // event — give it a real window (not just the week right after
+    // last frost) plus a later "still time" window for anyone running
+    // behind, capped so it's never suggested too late to fruit.
+    var tpebLateCap = weeksBefore(ff,10);
+    var tpebWindow1End = weeksAfter(lf,5);
+    var tpebWindow2Start = weeksAfter(lf,7);
+    var tpebWindow2End = weeksAfter(lf,12) < tpebLateCap ? weeksAfter(lf,12) : tpebLateCap;
+    addSuccession("Tomatoes, Peppers, Eggplant, Basil", "yellow", weeksAfter(lf,0.5), tpebWindow1End, 2,
+      "Transplant outdoors after last frost");
+    addSuccession("Tomatoes, Peppers, Eggplant, Basil", "yellow", tpebWindow2Start, tpebWindow2End, 3,
+      "Still time to transplant if you're running behind — they'll just mature a bit later");
 
     // ---- Succession sowings: same crop, planted every few weeks
     // across the season so nothing planted in May stops there, and
