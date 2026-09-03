@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radical Gardening — Planting Calendar</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --green:#2D5A1B;
@@ -240,6 +240,27 @@
   .hl-cat ul{margin:0;padding-left:18px;font-size:0.92rem;}
   .hl-cat li{margin-bottom:4px;}
 
+  .seasonal-box{
+    background:#fff;
+    border:1px solid var(--border);
+    border-left:5px solid var(--green);
+    border-radius:var(--radius);
+    padding:22px 28px;
+    margin-bottom:20px;
+  }
+  .seasonal-box .season-eyebrow{
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .seasonal-box h2{margin:0 0 4px;font-size:1.15rem;font-weight:700;color:var(--green-dark);}
+  .seasonal-box .season-subtitle{font-style:italic;color:var(--muted);margin:0 0 12px;font-size:0.95rem;}
+  .seasonal-box ul{margin:0;padding-left:20px;font-size:0.92rem;}
+  .seasonal-box li{margin-bottom:6px;}
+
   /* legend */
   .legend{
     display:flex;
@@ -315,6 +336,18 @@
   .cat ul{margin:0;padding-left:16px;font-size:0.86rem;}
   .cat li{margin-bottom:3px;}
   .empty{color:var(--muted);font-size:0.85rem;font-style:italic;margin:4px 0 0;}
+
+  .checklist-box{
+    background:var(--green-light);
+    border:1px solid #d7e4cd;
+    border-radius:var(--radius);
+    padding:26px 28px;
+    margin-top:28px;
+  }
+  .checklist-box h2{margin:0 0 4px;font-size:1.15rem;font-weight:700;color:var(--green-dark);}
+  .checklist-box .checklist-intro{font-style:italic;color:var(--muted);margin:0 0 14px;font-size:0.92rem;}
+  .checklist-box ul{margin:0;padding-left:20px;font-size:0.92rem;}
+  .checklist-box li{margin-bottom:10px;line-height:1.5;}
 
   .action-bar{
     display:flex;
@@ -436,6 +469,13 @@
         <p class="season-sentence" id="sumSeasonSentence"></p>
       </div>
 
+      <div class="seasonal-box">
+        <div class="season-eyebrow">Where You Are in the Season</div>
+        <h2 id="seasonTitle">—</h2>
+        <p class="season-subtitle" id="seasonSubtitle"></p>
+        <ul id="seasonTasks"></ul>
+      </div>
+
       <div class="highlight-box">
         <h2 id="hlTitle">What to do this month</h2>
         <div id="hlBody"></div>
@@ -448,6 +488,20 @@
       </div>
 
       <div class="calendar-grid" id="calendarGrid"></div>
+
+      <div class="checklist-box">
+        <h2>The Thriving Garden Checklist</h2>
+        <p class="checklist-intro">Not a to-do list — a way of seeing.</p>
+        <ul>
+          <li>Walk regularly and look closely. A garden you walk through three times a week reveals problems while they're small and easy to fix. A garden you visit once a week or less surprises you with problems that have already gotten out of hand.</li>
+          <li>Mix annual herbs and flowers into your vegetable plantings. Basil, dill, cilantro, marigolds, nasturtiums — these attract beneficial insects that prey on the pests that eat your crops. A monoculture of vegetables is an invitation for problems; a diverse planting is a working ecosystem.</li>
+          <li>Allow some vegetable crops to flower. When a carrot or a cilantro plant bolts and flowers, it becomes one of the best sources of food for beneficial insects in your whole garden. Not every bolting plant is a failure — some are doing important work.</li>
+          <li>Let perennial herbs flower. Thyme, oregano, sage, and chives in flower are pollinator magnets and pest-predator habitat. Don't deadhead everything.</li>
+          <li>Grow your most important crops in more than one location where possible. If a pest or disease hits one bed, it won't wipe out your entire supply.</li>
+          <li>Allow a patch of nettles or grasses to grow wild somewhere at the edge of your garden if you can. This is habitat for beneficial insects and the ecology that makes a garden self-regulating over time.</li>
+          <li>Succession plant when possible. When one planting finishes, something goes in its place. An empty bed for more than a few weeks is a missed opportunity and a weed incubator.</li>
+        </ul>
+      </div>
     </div>
 
     <div class="action-bar no-print">
@@ -493,6 +547,73 @@
     }
     return 6;
   }
+
+  // ---------------------------------------------------------------
+  // Seasonal rhythm — six broad phases of the gardening year, shown
+  // for whichever phase today's date falls in. Independent of frost
+  // dates/zone: this is about the general rhythm of garden work, not
+  // crop-specific timing.
+  // ---------------------------------------------------------------
+  var SEASONAL_PHASES = [
+    { months:[11,0], title:"Winter (Nov–Jan)", subtitle:"Growing Undercover, Plan, Rest, Prepare", tasks:[
+      "Harvest over-wintered crops.",
+      "Review the previous season honestly — what worked, what didn't, what you'd do differently.",
+      "Order seeds, and any new tools or materials you need.",
+      "Let the soil rest under mulch or a cover crop.",
+      "This is your design phase — plan next year's garden.",
+      "Build garden infrastructure and make beds, setting yourself up for success in spring."
+    ]},
+    { months:[1,2], title:"Early Spring (Feb–Mar)", subtitle:"Prepare and Start", tasks:[
+      "Top-dress beds with compost before planting begins.",
+      "Start seeds indoors for warm-season crops.",
+      "Transplant out early cold-season crops undercover.",
+      "Direct sow cold-hardy crops as soon as the soil is workable.",
+      "Get irrigation set up and ready before you need it."
+    ]},
+    { months:[3,4], title:"Spring Through Early Summer (Apr–May)", subtitle:"Plant and Establish", tasks:[
+      "Transplant warm-season crops after last frost.",
+      "Succession sow all kinds of crops every 2–3 weeks.",
+      "Weed consistently while plants are establishing.",
+      "Mulch heavily around everything that's in the ground."
+    ]},
+    { months:[5,6], title:"Midsummer (Jun–Jul)", subtitle:"Tend, Feed, and Harvest", tasks:[
+      "This is peak season — harvest every 2–3 days.",
+      "Feed fruiting crops with liquid fertilizer every 2 weeks to a month.",
+      "Stay on top of pests and diseases by walking the garden regularly.",
+      "Sow autumn crops — brassicas, roots, and greens.",
+      "Make some simple preserves."
+    ]},
+    { months:[7,8], title:"Late Summer Into Autumn (Aug–Sep)", subtitle:"Sow and Save", tasks:[
+      "Continue to sow fall crops.",
+      "Reap the harvests, and keep planting and maintaining.",
+      "Save seeds from your best plants.",
+      "Clear spent crops and immediately sow cover crops or top-dress with compost. Don't leave beds bare."
+    ]},
+    { months:[9,10], title:"Autumn (Sep–Nov)", subtitle:"Store, Restore, and Preserve", tasks:[
+      "Harvest storage crops — potatoes, winter squash, onions, garlic, dried beans — and cure them properly.",
+      "Apply a thick layer of compost and mulch over all beds before winter (or sow a cover crop).",
+      "Plant garlic.",
+      "Assess the season and write your notes while it's fresh.",
+      "Let the soil biology go to work over winter."
+    ]}
+  ];
+
+  function getCurrentPhase(monthIdx){
+    for(var i=0;i<SEASONAL_PHASES.length;i++){
+      if(SEASONAL_PHASES[i].months.indexOf(monthIdx) !== -1) return SEASONAL_PHASES[i];
+    }
+    return SEASONAL_PHASES[0];
+  }
+
+  var CHECKLIST_ITEMS = [
+    "Walk regularly and look closely. A garden you walk through three times a week reveals problems while they're small and easy to fix. A garden you visit once a week or less surprises you with problems that have already gotten out of hand.",
+    "Mix annual herbs and flowers into your vegetable plantings. Basil, dill, cilantro, marigolds, nasturtiums — these attract beneficial insects that prey on the pests that eat your crops. A monoculture of vegetables is an invitation for problems; a diverse planting is a working ecosystem.",
+    "Allow some vegetable crops to flower. When a carrot or a cilantro plant bolts and flowers, it becomes one of the best sources of food for beneficial insects in your whole garden. Not every bolting plant is a failure — some are doing important work.",
+    "Let perennial herbs flower. Thyme, oregano, sage, and chives in flower are pollinator magnets and pest-predator habitat. Don't deadhead everything.",
+    "Grow your most important crops in more than one location where possible. If a pest or disease hits one bed, it won't wipe out your entire supply.",
+    "Allow a patch of nettles or grasses to grow wild somewhere at the edge of your garden if you can. This is habitat for beneficial insects and the ecology that makes a garden self-regulating over time.",
+    "Succession plant when possible. When one planting finishes, something goes in its place. An empty bed for more than a few weeks is a missed opportunity and a weed incubator."
+  ];
 
   // ---------------------------------------------------------------
   // Open-Meteo geocoding (best-effort location lookup for display)
@@ -648,6 +769,9 @@
   var sumFirstFrost = document.getElementById("sumFirstFrost");
   var sumLocation = document.getElementById("sumLocation");
   var sumSeasonSentence = document.getElementById("sumSeasonSentence");
+  var seasonTitle = document.getElementById("seasonTitle");
+  var seasonSubtitle = document.getElementById("seasonSubtitle");
+  var seasonTasks = document.getElementById("seasonTasks");
   var hlTitle = document.getElementById("hlTitle");
   var hlBody = document.getElementById("hlBody");
   var calendarGrid = document.getElementById("calendarGrid");
@@ -928,6 +1052,17 @@
     var monthData = buildMonthData(lf, ff);
     var todayMonth = new Date().getMonth();
 
+    state.monthData = monthData;
+    state.lf = lf;
+    state.ff = ff;
+    state.todayMonth = todayMonth;
+
+    // Seasonal rhythm box
+    var phase = getCurrentPhase(todayMonth);
+    seasonTitle.textContent = phase.title;
+    seasonSubtitle.textContent = phase.subtitle;
+    seasonTasks.innerHTML = phase.tasks.map(function(t){ return "<li>" + escapeHtml(t) + "</li>"; }).join("");
+
     // Highlight box
     hlTitle.textContent = "What to do this month — " + MONTHS[todayMonth];
     var cur = monthData[todayMonth];
@@ -973,41 +1108,189 @@
   }
 
   // ---------------------------------------------------------------
+  // PDF generation — drawn directly with jsPDF rather than
+  // screenshotting the on-screen layout. That avoids the cropping,
+  // scroll-offset, and "too dense to read" problems that come with
+  // rasterizing a colorful multi-column grid onto a print page: this
+  // produces a plain, clean, reliably-paginated text document instead.
+  // ---------------------------------------------------------------
+  function buildPdfDocument(){
+    var doc = new window.jspdf.jsPDF({ unit: "pt", format: "letter" });
+    var pageWidth = doc.internal.pageSize.getWidth();
+    var pageHeight = doc.internal.pageSize.getHeight();
+    var margin = 50;
+    var contentWidth = pageWidth - margin * 2;
+    var y = margin;
+
+    var GREEN_DARK = [32, 64, 15];
+    var TEXT = [35, 35, 35];
+    var MUTED = [108, 111, 104];
+    var CAT_COLOR = { green: [45, 90, 27], yellow: [163, 105, 10], blue: [38, 100, 143] };
+
+    function setColor(rgb){ doc.setTextColor(rgb[0], rgb[1], rgb[2]); }
+
+    function ensureSpace(needed){
+      if(y + needed > pageHeight - margin){
+        doc.addPage();
+        y = margin;
+      }
+    }
+
+    function heading(text, size, color, spacingAfter){
+      ensureSpace(size + spacingAfter);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(size);
+      setColor(color || TEXT);
+      doc.text(text, margin, y);
+      y += size * 0.9 + spacingAfter;
+    }
+
+    function bodyText(text, size, color, opts){
+      opts = opts || {};
+      doc.setFont("helvetica", opts.bold ? "bold" : (opts.italic ? "italic" : "normal"));
+      doc.setFontSize(size);
+      setColor(color || TEXT);
+      var indent = opts.indent || 0;
+      var lineHeight = size * 1.35;
+      var lines = doc.splitTextToSize(text, contentWidth - indent);
+      lines.forEach(function(line){
+        ensureSpace(lineHeight);
+        doc.text(line, margin + indent, y);
+        y += lineHeight;
+      });
+      y += opts.spacingAfter || 0;
+    }
+
+    function bulletList(items, size, color, opts){
+      opts = opts || {};
+      var indent = opts.indent != null ? opts.indent : 14;
+      var bulletGap = 10;
+      doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+      doc.setFontSize(size);
+      setColor(color || TEXT);
+      var lineHeight = size * 1.35;
+      items.forEach(function(item){
+        var lines = doc.splitTextToSize(item, contentWidth - indent - bulletGap);
+        lines.forEach(function(line, li){
+          ensureSpace(lineHeight);
+          if(li === 0){ doc.text("•", margin + indent, y); }
+          doc.text(line, margin + indent + bulletGap, y);
+          y += lineHeight;
+        });
+        y += opts.itemSpacing != null ? opts.itemSpacing : 3;
+      });
+    }
+
+    function ruleLine(spacingBefore, spacingAfter){
+      ensureSpace(spacingBefore + 1 + spacingAfter);
+      y += spacingBefore;
+      doc.setDrawColor(224, 226, 222);
+      doc.setLineWidth(0.75);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += spacingAfter;
+    }
+
+    // ---- Title ----
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    setColor(GREEN_DARK);
+    doc.text("Radical Gardening", margin, y);
+    y += 22;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    setColor(MUTED);
+    doc.text("Personalized Planting Calendar", margin, y);
+    y += 26;
+
+    // ---- Summary ----
+    var lf = state.lf, ff = state.ff;
+    var seasonDays = Math.round((ff - lf) / 86400000);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    setColor(TEXT);
+    doc.text("Zone " + state.zone + "    |    Last Spring Frost: " + formatDate(lf) + "    |    First Fall Frost: " + formatDate(ff), margin, y);
+    y += 18;
+    if(state.location){
+      bodyText("Near " + state.location.name + (state.location.admin1 ? ", " + state.location.admin1 : "") + " · ZIP " + state.zip, 9.5, MUTED);
+    }
+    bodyText("Your growing season runs about " + seasonDays + " days, from " + formatDate(lf) + " to " + formatDate(ff) + ".", 10.5, TEXT, { spacingAfter: 6 });
+
+    ruleLine(4, 14);
+
+    // ---- Seasonal rhythm ----
+    var phase = getCurrentPhase(state.todayMonth != null ? state.todayMonth : new Date().getMonth());
+    heading("Where You Are in the Season", 13, GREEN_DARK, 2);
+    bodyText(phase.title + " — " + phase.subtitle, 10, MUTED, { italic: true, spacingAfter: 6 });
+    bulletList(phase.tasks, 9.7, TEXT, { itemSpacing: 4 });
+
+    ruleLine(6, 14);
+
+    // ---- Month by month ----
+    heading("Month-by-Month Calendar", 14, GREEN_DARK, 6);
+    bodyText("Green = Start Indoors/Undercover   ·   Yellow = Transplant Outdoors   ·   Blue = Direct Sow", 9, MUTED, { spacingAfter: 8 });
+
+    var monthData = state.monthData;
+    for(var m = 0; m < 12; m++){
+      var d = monthData[m];
+      ensureSpace(20);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12.5);
+      setColor(GREEN_DARK);
+      doc.text(MONTHS[m] + (m === state.todayMonth ? "  (this month)" : ""), margin, y);
+      y += 16;
+
+      ["green", "yellow", "blue"].forEach(function(cat){
+        if(d[cat].length){
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          setColor(CAT_COLOR[cat]);
+          ensureSpace(12);
+          doc.text(CAT_LABEL[cat].toUpperCase(), margin + 10, y);
+          y += 12;
+          var items = d[cat].map(function(entry){ return entry.crops + " — " + entry.note; });
+          bulletList(items, 9.6, TEXT, { indent: 22, itemSpacing: 2 });
+        }
+      });
+      if(!d.green.length && !d.yellow.length && !d.blue.length){
+        bodyText("No scheduled planting tasks.", 9.6, MUTED, { italic: true, indent: 10 });
+      }
+      y += 8;
+    }
+
+    ruleLine(4, 14);
+
+    // ---- Thriving Garden Checklist ----
+    heading("The Thriving Garden Checklist", 14, GREEN_DARK, 2);
+    bodyText("Not a to-do list — a way of seeing.", 10, MUTED, { italic: true, spacingAfter: 6 });
+    bulletList(CHECKLIST_ITEMS, 9.7, TEXT, { itemSpacing: 6 });
+
+    // ---- Footer ----
+    var pageCount = doc.internal.getNumberOfPages();
+    for(var p = 1; p <= pageCount; p++){
+      doc.setPage(p);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      setColor(MUTED);
+      doc.text("Radical Gardening", margin, pageHeight - 24);
+      doc.text("Page " + p + " of " + pageCount, pageWidth - margin - 60, pageHeight - 24);
+    }
+
+    return doc;
+  }
+
+  // ---------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------
   printBtn.addEventListener("click", function(){ window.print(); });
 
   pdfBtn.addEventListener("click", function(){
-    if(!window.html2pdf){
+    if(!window.jspdf || !window.jspdf.jsPDF){
       alert("The PDF library couldn't load (no internet connection?). Use \"Print Calendar\" and choose \"Save as PDF\" as the printer instead.");
       return;
     }
-    var target = document.getElementById("pdfContent");
-    var opt = {
-      margin: 0.4,
-      filename: "radical-gardening-calendar-" + (state.zip || "calendar") + ".pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: target.scrollWidth,
-        windowHeight: target.scrollHeight
-      },
-      jsPDF: { unit: "in", format: "letter", orientation: "landscape" },
-      pagebreak: { mode: ["css", "legacy"], avoid: [".month-card", ".summary-bar", ".highlight-box", ".legend"] }
-    };
-    // The button sits below a long page (12 month cards) — if we capture
-    // while the page is scrolled down, html2canvas renders that scroll
-    // offset as blank leading pages and then runs out of room before the
-    // real content ends. Reset scroll and wait a paint frame first.
-    window.scrollTo(0, 0);
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){
-        window.html2pdf().set(opt).from(target).save();
-      });
-    });
+    if(!state.monthData){ return; }
+    var doc = buildPdfDocument();
+    doc.save("radical-gardening-calendar-" + (state.zip || "calendar") + ".pdf");
   });
 
   startOverBtn.addEventListener("click", function(){
