@@ -62,6 +62,25 @@
     font-weight:500;
     margin:6px 0 0;
   }
+  .book-call-bar{
+    text-align:center;
+    margin:16px 0 4px;
+  }
+  .book-call-bar.bottom{
+    margin:36px 0 8px;
+  }
+  .book-call-btn{
+    display:inline-block;
+    background:var(--green);
+    color:#fff;
+    font-weight:700;
+    font-size:0.92rem;
+    padding:11px 24px;
+    border-radius:999px;
+    text-decoration:none;
+    transition:background .15s ease;
+  }
+  .book-call-btn:hover{background:var(--green-dark);}
 
   /* ---------- Landing screen ---------- */
   .landing-card{
@@ -418,6 +437,10 @@
     <p class="brand-tagline">Learn to grow your own food. Plant the change.</p>
   </header>
 
+  <div class="book-call-bar no-print">
+    <a class="book-call-btn" href="https://radical-gardening.com/start" target="_blank" rel="noopener noreferrer">Book a Garden Strategy Call</a>
+  </div>
+
   <!-- ===================== LANDING SCREEN ===================== -->
   <section id="landingScreen">
     <div class="landing-card">
@@ -525,6 +548,10 @@
       <button class="btn btn-ghost" id="startOverBtn">Start Over</button>
     </div>
   </section>
+
+  <div class="book-call-bar bottom no-print">
+    <a class="book-call-btn" href="https://radical-gardening.com/start" target="_blank" rel="noopener noreferrer">Book a Garden Strategy Call</a>
+  </div>
 
   <footer class="app-footer no-print">Radical Gardening — planting calendar built for your local frost dates.</footer>
 </div>
