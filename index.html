@@ -192,6 +192,115 @@
   .prompt-actions{display:flex;gap:10px;margin-top:6px;}
   .prompt-actions .btn-secondary{flex:0 0 auto;padding:14px 18px;}
   .prompt-actions .btn-primary{flex:1;margin-top:0;}
+  .no-frost-link{
+    text-align:center;
+    margin:16px 0 0;
+    font-size:0.88rem;
+  }
+  .no-frost-link a{color:var(--muted);text-decoration:underline;}
+  .no-frost-panel{
+    margin-top:16px;
+    padding:16px 18px;
+    background:var(--blue-light);
+    border:1px solid #cfe0ee;
+    border-radius:8px;
+    font-size:0.92rem;
+    color:var(--text);
+  }
+  .no-frost-panel p{margin:0 0 10px;}
+  .no-frost-panel a{color:var(--blue);font-weight:600;}
+  .no-frost-panel .prompt-actions{margin-top:10px;}
+
+  /* ---------- Crop selection screen ---------- */
+  .crop-screen-intro{
+    max-width:720px;
+    margin:0 auto 20px;
+    text-align:center;
+  }
+  .crop-screen-intro h2{
+    margin:0 0 8px;
+    font-size:1.5rem;
+    color:var(--green-dark);
+  }
+  .crop-screen-intro p{
+    margin:0;
+    color:var(--muted);
+    font-size:0.95rem;
+  }
+  #cropForm{max-width:900px;margin:0 auto;}
+  .crop-level-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px 24px;
+    margin-bottom:16px;
+  }
+  .crop-level-head{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:2px;
+  }
+  .crop-level-title{
+    font-size:1.05rem;
+    font-weight:800;
+    color:var(--green-dark);
+  }
+  .crop-level-num{
+    display:inline-block;
+    background:var(--green);
+    color:#fff;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    text-align:center;
+    line-height:22px;
+    font-size:0.78rem;
+    font-weight:800;
+    margin-right:8px;
+  }
+  .crop-level-subtitle{
+    color:var(--muted);
+    font-size:0.85rem;
+    font-style:italic;
+    margin:0 0 12px;
+  }
+  .crop-select-all{
+    font-size:0.8rem;
+    font-weight:600;
+    color:var(--green-dark);
+    text-decoration:underline;
+    cursor:pointer;
+    background:none;
+    border:none;
+    padding:0;
+  }
+  .crop-subgroup-label{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-weight:700;
+    color:var(--muted);
+    margin:10px 0 6px;
+  }
+  .crop-checkbox-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+    gap:6px 12px;
+  }
+  .crop-checkbox{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:0.92rem;
+    padding:4px 0;
+  }
+  .crop-checkbox input{width:16px;height:16px;accent-color:var(--green);cursor:pointer;}
+  .crop-checkbox label{cursor:pointer;}
+  .crop-screen-actions{max-width:900px;margin:20px auto 0;}
+  .crop-error{text-align:center;max-width:900px;margin:0 auto;}
 
   /* ---------- Results screen ---------- */
   .summary-bar{
@@ -414,6 +523,9 @@
     .summary-top{flex-direction:column;align-items:flex-start;}
     .calendar-grid{grid-template-columns:1fr;}
     .action-bar .btn{width:100%;}
+    .crop-checkbox-grid{grid-template-columns:repeat(2, 1fr);}
+    .crop-screen-actions .btn{width:100%;}
+    .crop-level-card{padding:18px 16px;}
   }
 
   @media print{
@@ -480,7 +592,33 @@
           <button type="submit" class="btn btn-primary">Generate My Calendar</button>
         </div>
       </form>
+      <p class="no-frost-link"><a href="#" id="noFrostLink">My area doesn't really get frost →</a></p>
+
+      <div class="no-frost-panel hidden" id="noFrostPanel">
+        <p>This calendar is built around frost dates, so it isn't a good fit for frost-free or near-frost-free climates like South Florida — the whole planting rhythm there runs on dry season / wet season, not frost.</p>
+        <p>For a calendar built for your area, check out the <a href="https://www.ufseeds.com/pages/florida-vegetable-planting-calendar#schedule" target="_blank" rel="noopener">Florida Vegetable Planting Calendar</a>.</p>
+        <div class="prompt-actions">
+          <button type="button" class="btn btn-secondary" id="backToZipBtnFromNoFrost">Start Over</button>
+          <button type="button" class="btn btn-outline" id="backToFrostFormBtn">Back to Frost Dates</button>
+        </div>
+      </div>
     </div>
+  </section>
+
+  <!-- ===================== CROP SELECTION SCREEN ===================== -->
+  <section id="cropScreen" class="hidden">
+    <div class="crop-screen-intro">
+      <h2>Choose Your Crops</h2>
+      <p>Pick what you'll actually eat. Start at the Foundation and Meal Makers — your staples — then add extras from there.</p>
+    </div>
+    <form id="cropForm" novalidate>
+      <div id="cropLevelsContainer"></div>
+      <div class="error-text crop-error" id="cropError"></div>
+      <div class="prompt-actions crop-screen-actions">
+        <button type="button" class="btn btn-secondary" id="backToFrostBtn">Back</button>
+        <button type="submit" class="btn btn-primary">Generate My Calendar</button>
+      </div>
+    </form>
   </section>
 
   <!-- ===================== RESULTS SCREEN ===================== -->
@@ -562,6 +700,91 @@
 
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var CAT_LABEL = {green:"Start Indoors / Undercover", yellow:"Transplant Outdoors", blue:"Direct Sow"};
+
+  // ---------------------------------------------------------------
+  // Kitchen Garden Crops — the curated, selectable crop list, grouped
+  // by purpose (for the picker UI). This is independent of how crops
+  // are grouped for *timing* in buildMonthData — a crop's level here
+  // just controls where its checkbox appears.
+  // ---------------------------------------------------------------
+  var CROP_LEVELS = [
+    { level:1, title:"The Foundation", subtitle:"Food security and bulk.",
+      crops:["Potatoes","Winter Squash","Sweet Potatoes","Dry Beans","Onions","Garlic","Beets","Carrots","Shelling Peas","Corn"] },
+    { level:2, title:"The Meal Makers", subtitle:"Turn crops into real meals.",
+      groups:[
+        { label:"Warm Season", crops:["Tomatoes","Peppers","Okra","Eggplant","Zucchini","Green Beans","Cucumbers","Watermelon","Cantaloupe"] },
+        { label:"Cool Season", crops:["Kale","Collards","Broccoli","Cabbage","Cauliflower","Swiss Chard","Leeks"] }
+      ] },
+    { level:3, title:"Fillers", subtitle:"Quick and fresh.",
+      crops:["Lettuce","Radishes","Turnips","Bok Choy","Spinach","Snap Peas","Arugula"] },
+    { level:4, title:"Flavor Makers", subtitle:"Small space. Big impact.",
+      crops:["Parsley","Basil","Cilantro","Dill","Fennel","Celery","Ginger","Turmeric"] },
+    { level:5, title:"Soul Crops", subtitle:"Joy and fun.",
+      crops:["Lemongrass","Tulsi Basil","Marigolds","Nasturtium","Calendula","Chamomile","Zinnias","Strawberries","Borage","Sunflowers"] }
+  ];
+
+  function allCropNames(){
+    var names = [];
+    CROP_LEVELS.forEach(function(lvl){
+      if(lvl.crops){ names = names.concat(lvl.crops); }
+      if(lvl.groups){ lvl.groups.forEach(function(g){ names = names.concat(g.crops); }); }
+    });
+    return names;
+  }
+
+  function slugifyCrop(name){
+    return "crop-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  }
+
+  function renderCropLevelsUI(){
+    var container = document.getElementById("cropLevelsContainer");
+    var html = "";
+    CROP_LEVELS.forEach(function(lvl){
+      html += '<div class="crop-level-card" data-level="' + lvl.level + '">';
+      html += '<div class="crop-level-head"><div class="crop-level-title"><span class="crop-level-num">' + lvl.level + '</span>' + escapeHtml(lvl.title) + '</div>';
+      html += '<button type="button" class="crop-select-all" data-level="' + lvl.level + '">Select all</button></div>';
+      html += '<p class="crop-level-subtitle">' + escapeHtml(lvl.subtitle) + '</p>';
+
+      function renderCheckboxGrid(crops){
+        var out = '<div class="crop-checkbox-grid">';
+        crops.forEach(function(crop){
+          var id = slugifyCrop(crop);
+          out += '<div class="crop-checkbox"><input type="checkbox" id="' + id + '" data-crop="' + escapeHtml(crop) + '" data-level="' + lvl.level + '">' +
+            '<label for="' + id + '">' + escapeHtml(crop) + '</label></div>';
+        });
+        out += '</div>';
+        return out;
+      }
+
+      if(lvl.crops){
+        html += renderCheckboxGrid(lvl.crops);
+      }
+      if(lvl.groups){
+        lvl.groups.forEach(function(g){
+          html += '<div class="crop-subgroup-label">' + escapeHtml(g.label) + '</div>';
+          html += renderCheckboxGrid(g.crops);
+        });
+      }
+      html += '</div>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll(".crop-select-all").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var lvl = btn.getAttribute("data-level");
+        var boxes = container.querySelectorAll('input[type=checkbox][data-level="' + lvl + '"]');
+        var allChecked = Array.prototype.every.call(boxes, function(b){ return b.checked; });
+        boxes.forEach(function(b){ b.checked = !allChecked; });
+      });
+    });
+  }
+
+  function getSelectedCrops(){
+    var boxes = document.querySelectorAll('#cropLevelsContainer input[type=checkbox]:checked');
+    var set = {};
+    boxes.forEach(function(b){ set[b.getAttribute("data-crop")] = true; });
+    return set;
+  }
 
   // ---------------------------------------------------------------
   // ZIP3 -> USDA zone lookup (built-in, approximate regional table)
@@ -741,7 +964,12 @@
   // ---------------------------------------------------------------
   var landingScreen = document.getElementById("landingScreen");
   var promptScreen = document.getElementById("promptScreen");
+  var cropScreen = document.getElementById("cropScreen");
   var resultsScreen = document.getElementById("resultsScreen");
+
+  var cropForm = document.getElementById("cropForm");
+  var cropError = document.getElementById("cropError");
+  var backToFrostBtn = document.getElementById("backToFrostBtn");
 
   var zipForm = document.getElementById("zipForm");
   var zipInput = document.getElementById("zipInput");
@@ -773,7 +1001,7 @@
   var startOverBtn = document.getElementById("startOverBtn");
 
   function showScreen(el){
-    [landingScreen, promptScreen, resultsScreen].forEach(function(s){ s.classList.add("hidden"); });
+    [landingScreen, promptScreen, cropScreen, resultsScreen].forEach(function(s){ s.classList.add("hidden"); });
     el.classList.remove("hidden");
     window.scrollTo({top:0, behavior:"smooth"});
   }
@@ -789,6 +1017,8 @@
       return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c];
     });
   }
+
+  renderCropLevelsUI();
 
   // ---------------------------------------------------------------
   // ZIP submit
@@ -842,11 +1072,36 @@
         almanacNote.innerHTML = "For the most accurate results, look up your frost dates at " +
           "<a href=\"https://www.almanac.com/gardening/frostdates\" target=\"_blank\" rel=\"noopener\">almanac.com/gardening/frostdates</a> and enter them below.";
       }
+      document.getElementById("noFrostPanel").classList.add("hidden");
+      frostForm.classList.remove("hidden");
       showScreen(promptScreen);
     });
   });
 
   backToZipBtn.addEventListener("click", function(){
+    showScreen(landingScreen);
+  });
+
+  var noFrostLink = document.getElementById("noFrostLink");
+  var noFrostPanel = document.getElementById("noFrostPanel");
+  var backToFrostFormBtn = document.getElementById("backToFrostFormBtn");
+  var backToZipBtnFromNoFrost = document.getElementById("backToZipBtnFromNoFrost");
+
+  noFrostLink.addEventListener("click", function(e){
+    e.preventDefault();
+    frostForm.classList.add("hidden");
+    noFrostPanel.classList.remove("hidden");
+  });
+  backToFrostFormBtn.addEventListener("click", function(){
+    noFrostPanel.classList.add("hidden");
+    frostForm.classList.remove("hidden");
+  });
+  backToZipBtnFromNoFrost.addEventListener("click", function(){
+    noFrostPanel.classList.add("hidden");
+    frostForm.classList.remove("hidden");
+    zipInput.value = "";
+    zipError.textContent = "";
+    state = { zip:"", zone:null, location:null };
     showScreen(landingScreen);
   });
 
@@ -875,7 +1130,25 @@
     var ff = new Date(REF_YEAR, rawFF.getMonth(), rawFF.getDate());
     if(ff <= lf){ ff = new Date(REF_YEAR + 1, rawFF.getMonth(), rawFF.getDate()); }
 
-    renderResults(lf, ff);
+    state.lf = lf;
+    state.ff = ff;
+    showScreen(cropScreen);
+  });
+
+  backToFrostBtn.addEventListener("click", function(){
+    showScreen(promptScreen);
+  });
+
+  cropForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var selectedCrops = getSelectedCrops();
+    if(!Object.keys(selectedCrops).length){
+      cropError.textContent = "Please select at least one crop to build your calendar.";
+      return;
+    }
+    cropError.textContent = "";
+    state.selectedCrops = selectedCrops;
+    renderResults(state.lf, state.ff, selectedCrops);
     showScreen(resultsScreen);
   });
 
@@ -885,7 +1158,7 @@
   function weeksBefore(d, w){ return new Date(d.getTime() - w * 7 * 86400000); }
   function weeksAfter(d, w){ return new Date(d.getTime() + w * 7 * 86400000); }
 
-  function buildMonthData(lf, ff){
+  function buildMonthData(lf, ff, selectedCrops){
     var monthData = [];
     for(var i=0;i<12;i++) monthData.push({green:[], yellow:[], blue:[]});
 
@@ -893,39 +1166,60 @@
     // crops+note) already present that month — this is what lets a
     // succession series span several months as distinct cards while
     // collapsing multiple hits inside one month into a single line.
-    function addByDate(date, cat, crops, note){
+    function addRaw(date, cat, label, note){
       var idx = ((date.getMonth() % 12) + 12) % 12;
       var arr = monthData[idx][cat];
-      var exists = arr.some(function(e){ return e.crops === crops && e.note === note; });
-      if(!exists) arr.push({crops: crops, note: note});
+      var exists = arr.some(function(e){ return e.crops === label && e.note === note; });
+      if(!exists) arr.push({crops: label, note: note});
+    }
+
+    // Filters a group's crop list down to whichever ones the user
+    // actually selected — if none of them were picked, nothing is added.
+    function selectedOf(cropsArray){
+      return cropsArray.filter(function(c){ return selectedCrops[c]; });
+    }
+
+    function addByDate(date, cat, cropsArray, note){
+      var filtered = selectedOf(cropsArray);
+      if(!filtered.length) return;
+      addRaw(date, cat, filtered.join(", "), note);
     }
 
     // Repeats a sowing every `intervalWeeks` from startDate through
     // endDate (inclusive), for crops that are planted in succession
     // rather than just once.
-    function addSuccession(cropsLabel, cat, startDate, endDate, intervalWeeks, note){
-      if(endDate < startDate) return;
+    function addSuccession(cropsArray, cat, startDate, endDate, intervalWeeks, note){
+      var filtered = selectedOf(cropsArray);
+      if(!filtered.length || endDate < startDate) return;
+      var label = filtered.join(", ");
       var d = new Date(startDate.getTime());
       var guard = 0;
       while(d <= endDate && guard < 20){
-        addByDate(d, cat, cropsLabel, note);
+        addRaw(d, cat, label, note);
         d = weeksAfter(d, intervalWeeks);
         guard++;
       }
     }
 
+    var warmStarts = ["Tomatoes","Peppers","Eggplant","Basil","Tulsi Basil"];
+    var cucurbits = ["Zucchini","Cucumbers","Watermelon","Cantaloupe"];
+    var beansCorn = ["Green Beans","Dry Beans","Corn"];
+    var coolBrassicas = ["Kale","Collards","Broccoli","Cabbage","Cauliflower"];
+    var quickGreens = ["Lettuce","Spinach","Arugula","Bok Choy"];
+    var rootCrops = ["Carrots","Beets","Radishes","Turnips","Fennel"];
+
     var groups = [
-      { crops:["Tomatoes","Peppers","Eggplant","Basil"], items:[
+      { crops:warmStarts, items:[
         {cat:"green", date:weeksBefore(lf,7), note:"Start indoors or undercover (6–8 wks before last frost)"}
       ]},
-      { crops:["Zucchini","Cucumbers","Squash","Melons"], items:[
+      { crops:cucurbits, items:[
         {cat:"green", date:weeksBefore(lf,3.5), note:"Start indoors or undercover (3–4 wks before last frost)"},
         {cat:"blue", date:weeksAfter(lf,0.5), note:"Or direct sow after last frost"}
       ]},
-      { crops:["Pumpkins","Winter Squash"], items:[
+      { crops:["Winter Squash"], items:[
         {cat:"blue", date:weeksBefore(ff,16), note:"Direct sow for a fall harvest (needs ~110 days)"}
       ]},
-      { crops:["Beans","Corn"], items:[
+      { crops:beansCorn, items:[
         {cat:"blue", date:weeksAfter(lf,0.5), note:"Direct sow after last frost"}
       ]},
       { crops:["Potatoes"], items:[
@@ -934,23 +1228,23 @@
       { crops:["Sweet Potatoes"], items:[
         {cat:"blue", date:weeksAfter(lf,3), note:"Plant slips once soil is warm (3–4 wks after last frost)"}
       ]},
-      { crops:["Kale","Broccoli","Cabbage","Cauliflower","Brussels Sprouts"], items:[
+      { crops:["Ginger","Turmeric"], items:[
+        {cat:"blue", date:weeksAfter(lf,3), note:"Plant rhizomes once soil is warm (needs a long warm season — best in mild-winter climates)"}
+      ]},
+      { crops:coolBrassicas, items:[
         {cat:"green", date:weeksBefore(lf,7), note:"Start indoors or undercover (6–8 wks before last frost)"},
         {cat:"yellow", date:weeksBefore(lf,3), note:"Transplant outdoors (2–4 wks before last frost)"},
         {cat:"green", date:new Date(lf.getFullYear(), 6, 15), note:"Start indoors or undercover again for a fall crop"},
         {cat:"yellow", date:weeksBefore(ff,7), note:"Transplant fall crop outdoors (~7 wks before first frost)"}
       ]},
-      { crops:["Lettuce","Spinach","Arugula"], items:[
+      { crops:quickGreens, items:[
         {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"}
       ]},
       { crops:["Swiss Chard"], items:[
         {cat:"blue", date:weeksBefore(lf,2), note:"Direct sow (2 wks before last frost)"}
       ]},
-      { crops:["Carrots","Beets","Radishes","Turnips"], items:[
+      { crops:rootCrops, items:[
         {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"}
-      ]},
-      { crops:["Rutabaga"], items:[
-        {cat:"blue", date:weeksBefore(ff,12), note:"Direct sow for a fall/winter crop (~90 days)"}
       ]},
       { crops:["Garlic"], items:[
         {cat:"blue", date:new Date(ff.getFullYear(), 9, 15), note:"Plant cloves (October–November)"},
@@ -959,79 +1253,76 @@
       { crops:["Onions","Leeks","Celery"], items:[
         {cat:"green", date:weeksBefore(lf,11), note:"Start indoors or undercover (10–12 wks before last frost)"}
       ]},
-      { crops:["Asparagus"], items:[
-        {cat:"blue", date:weeksBefore(lf,2), note:"Plant crowns (perennial — plant once, harvest for years)"}
-      ]},
-      { crops:["Peas"], items:[
+      { crops:["Shelling Peas","Snap Peas"], items:[
         {cat:"blue", date:weeksBefore(lf,5), note:"Direct sow (4–6 wks before last frost)"},
         {cat:"blue", date:weeksBefore(ff,9), note:"Direct sow again for a fall crop (~9 wks before first frost)"}
       ]},
       { crops:["Parsley","Dill"], items:[
         {cat:"blue", date:weeksAfter(lf,0.5), note:"Direct sow after last frost"},
         {cat:"green", date:weeksBefore(lf,5), note:"Or start indoors or undercover (4–6 wks before last frost)"}
+      ]},
+      { crops:["Nasturtium","Marigolds","Zinnias","Borage","Sunflowers"], items:[
+        {cat:"blue", date:weeksAfter(lf,0.5), note:"Direct sow after last frost — easy, pollinator-friendly"}
+      ]},
+      { crops:["Calendula","Chamomile"], items:[
+        {cat:"blue", date:weeksBefore(lf,4), note:"Direct sow (cool-season annual, ~4 wks before last frost)"}
+      ]},
+      { crops:["Lemongrass"], items:[
+        {cat:"yellow", date:weeksAfter(lf,1), note:"Transplant outdoors after last frost (tender perennial — treat as annual in cold climates)"}
+      ]},
+      { crops:["Strawberries"], items:[
+        {cat:"blue", date:weeksBefore(lf,2), note:"Plant crowns (perennial — plant once, harvest for years)"}
       ]}
     ];
 
     groups.forEach(function(g){
       g.items.forEach(function(it){
-        addByDate(it.date, it.cat, g.crops.join(", "), it.note);
+        addByDate(it.date, it.cat, g.crops, it.note);
       });
     });
 
-    // Transplanting tomatoes/peppers/eggplant/basil isn't a single-day
-    // event — give it a real window (not just the week right after
-    // last frost) plus a later "still time" window for anyone running
-    // behind, capped so it's never suggested too late to fruit.
+    // Transplanting the warm-season starts isn't a single-day event —
+    // give it a real window (not just the week right after last frost)
+    // plus a later "still time" window for anyone running behind,
+    // capped so it's never suggested too late to fruit.
     var tpebLateCap = weeksBefore(ff,10);
     var tpebWindow1End = weeksAfter(lf,5);
     var tpebWindow2Start = weeksAfter(lf,7);
     var tpebWindow2End = weeksAfter(lf,12) < tpebLateCap ? weeksAfter(lf,12) : tpebLateCap;
-    addSuccession("Tomatoes, Peppers, Eggplant, Basil", "yellow", weeksAfter(lf,0.5), tpebWindow1End, 2,
+    addSuccession(warmStarts, "yellow", weeksAfter(lf,0.5), tpebWindow1End, 2,
       "Transplant outdoors after last frost");
-    addSuccession("Tomatoes, Peppers, Eggplant, Basil", "yellow", tpebWindow2Start, tpebWindow2End, 3,
+    addSuccession(warmStarts, "yellow", tpebWindow2Start, tpebWindow2End, 3,
       "Still time to transplant if you're running behind — they'll just mature a bit later");
 
     // ---- Succession sowings: same crop, planted every few weeks
     // across the season so nothing planted in May stops there, and
     // fast-growing crops keep going through summer.
-    addSuccession("Beans, Corn", "blue", weeksAfter(lf,0.5), weeksBefore(ff,9), 3,
+    addSuccession(beansCorn, "blue", weeksAfter(lf,0.5), weeksBefore(ff,9), 3,
       "Direct sow (succession every 2–3 wks for continuous harvest)");
-    addSuccession("Okra", "blue", weeksAfter(lf,2), weeksBefore(ff,10), 4,
+    addSuccession(["Okra"], "blue", weeksAfter(lf,2), weeksBefore(ff,10), 4,
       "Direct sow once soil is warm (succession optional)");
-    addSuccession("Zucchini, Cucumbers, Squash, Melons", "blue", weeksAfter(lf,0.5), weeksBefore(ff,9), 3,
+    addSuccession(cucurbits, "blue", weeksAfter(lf,0.5), weeksBefore(ff,9), 3,
       "Direct sow (succession every 2–3 wks for a steady harvest)");
-    addSuccession("Basil", "blue", weeksAfter(lf,2), weeksBefore(ff,8), 4,
+    addSuccession(["Basil","Tulsi Basil"], "blue", weeksAfter(lf,2), weeksBefore(ff,8), 4,
       "Direct sow more (succession every 3–4 wks)");
-    addSuccession("Lettuce, Spinach, Arugula", "blue", weeksBefore(lf,5), weeksAfter(lf,3), 2,
+    addSuccession(quickGreens, "blue", weeksBefore(lf,5), weeksAfter(lf,3), 2,
       "Direct sow (succession every 2 wks while weather is cool)");
-    addSuccession("Lettuce, Spinach, Arugula", "blue", weeksBefore(ff,8), weeksBefore(ff,4), 2,
+    addSuccession(quickGreens, "blue", weeksBefore(ff,8), weeksBefore(ff,4), 2,
       "Direct sow again for a fall crop (succession every 2 wks)");
-    addSuccession("Swiss Chard", "blue", weeksBefore(lf,2), weeksBefore(ff,8), 5,
+    addSuccession(["Swiss Chard"], "blue", weeksBefore(lf,2), weeksBefore(ff,8), 5,
       "Direct sow (heat-tolerant, succession through summer)");
-    addSuccession("Carrots, Beets, Radishes, Turnips", "blue", weeksBefore(lf,5), weeksAfter(lf,3), 2,
+    addSuccession(rootCrops, "blue", weeksBefore(lf,5), weeksAfter(lf,3), 2,
       "Direct sow (succession every 2–3 wks)");
-    addSuccession("Carrots, Beets, Radishes, Turnips", "blue", weeksBefore(ff,10), weeksBefore(ff,6), 2,
+    addSuccession(rootCrops, "blue", weeksBefore(ff,10), weeksBefore(ff,6), 2,
       "Direct sow again for a fall crop (succession every 2 wks)");
-    addSuccession("Green Onions (Scallions)", "blue", weeksBefore(lf,2), weeksBefore(ff,6), 3,
-      "Direct sow (quick-growing, succession every 3 wks)");
-    addSuccession("Cilantro", "blue", weeksAfter(lf,2), weeksBefore(ff,8), 3,
+    addSuccession(["Cilantro"], "blue", weeksAfter(lf,2), weeksBefore(ff,8), 3,
       "Direct sow more (succession every 3 wks — bolts quickly in heat)");
 
     // A second potato planting for a fall crop, only if there's enough
     // season left for it to mature (~10 wks) after it goes in.
     var potato2 = weeksAfter(lf,10);
     if(potato2 <= weeksBefore(ff,10)){
-      addByDate(potato2, "blue", "Potatoes", "Second planting for a fall crop (mild-winter climates)");
-    }
-
-    // Guarantee every month has at least one real planting task —
-    // microgreens can be started indoors any time of year in a couple
-    // of weeks, so they're the honest fallback for an otherwise-quiet month.
-    for(var m=0;m<12;m++){
-      var md = monthData[m];
-      if(!md.green.length && !md.yellow.length && !md.blue.length){
-        md.green.push({crops:"Microgreens", note:"Start indoors or undercover anytime — ready to harvest in 1–3 wks"});
-      }
+      addByDate(potato2, "blue", ["Potatoes"], "Second planting for a fall crop (mild-winter climates)");
     }
 
     return monthData;
@@ -1041,7 +1332,7 @@
     return MONTHS[d.getMonth()] + " " + d.getDate();
   }
 
-  function renderResults(lf, ff){
+  function renderResults(lf, ff, selectedCrops){
     sumZone.textContent = "Zone " + state.zone;
     sumLastFrost.textContent = formatDate(lf);
     sumFirstFrost.textContent = formatDate(ff);
@@ -1053,7 +1344,7 @@
     sumSeasonSentence.textContent = "Your growing season runs about " + seasonDays + " days, from " +
       formatDate(lf) + " to " + formatDate(ff) + ".";
 
-    var monthData = buildMonthData(lf, ff);
+    var monthData = buildMonthData(lf, ff, selectedCrops);
     var todayMonth = new Date().getMonth();
 
     state.monthData = monthData;
@@ -1301,6 +1592,8 @@
     zipInput.value = "";
     zipError.textContent = "";
     state = { zip:"", zone:null, location:null };
+    document.querySelectorAll('#cropLevelsContainer input[type=checkbox]').forEach(function(b){ b.checked = false; });
+    cropError.textContent = "";
     showScreen(landingScreen);
   });
 
