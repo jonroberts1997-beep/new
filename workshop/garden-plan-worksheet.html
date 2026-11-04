@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Garden Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#2D5A1B; --green-dark:#20400f; --green-light:#eaf1e5;
+    --yellow:#c8860a; --yellow-light:#fbf1de;
+    --text:#232323; --muted:#5f625b; --line:#b9bdb3; --border:#d5d9cf;
+  }
+  @page{ size: letter; margin: 0.4in; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#fff;}
+  body{font-family:'Montserrat',Arial,sans-serif;color:var(--text);font-size:7.8pt;line-height:1.27;
+       -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .page{width:7.7in;height:10.15in;margin:0 auto;display:flex;flex-direction:column;gap:5px;overflow:hidden;}
+
+  /* header */
+  header{display:flex;align-items:center;gap:10px;border-bottom:2.5px solid var(--green);padding-bottom:6px;}
+  header img{height:42px;}
+  .h-title{flex:1;}
+  .eyebrow{font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);}
+  h1{margin:0;font-size:16.5pt;font-weight:800;color:var(--green);line-height:1.1;}
+  .sub{font-size:7.8pt;color:var(--muted);font-weight:500;}
+  .goal{width:2.6in;font-size:7.6pt;font-weight:600;color:var(--green-dark);}
+  .goal .fill{margin-top:13px;}
+
+  .fill{border-bottom:1px solid var(--line);height:14px;}
+  .fill.sm{height:12px;}
+  .inline{display:inline-block;border-bottom:1px solid var(--line);min-width:42px;height:11px;vertical-align:bottom;}
+
+  .rule{background:var(--yellow-light);border-left:3px solid var(--yellow);padding:4px 8px;font-size:7.8pt;}
+  .rule b{color:#7a5205;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;}
+  .box{border:1.3px solid var(--border);border-radius:7px;padding:6px 8px;display:flex;flex-direction:column;}
+  .box h2{margin:0 0 3px;font-size:9.6pt;font-weight:800;color:var(--green-dark);display:flex;align-items:center;gap:6px;}
+  .num{background:var(--green);color:#fff;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:7.5pt;flex:none;}
+  .box .tag{font-size:7pt;color:var(--muted);font-style:italic;margin:-1px 0 4px;}
+  .lbl{font-weight:700;font-size:7.6pt;margin-top:3px;}
+  ul.tips{margin:2px 0 3px;padding-left:12px;}
+  ul.tips li{margin-bottom:1px;}
+  .win{margin-top:auto;padding-top:4px;font-size:7.4pt;color:var(--green-dark);font-weight:700;}
+  .win span{font-weight:500;color:var(--text);}
+
+  table{width:100%;border-collapse:collapse;font-size:7.4pt;}
+  th,td{border:1px solid var(--border);padding:2px 4px;text-align:left;}
+  th{background:var(--green-light);font-weight:700;color:var(--green-dark);}
+  td.blank{height:15px;}
+  .score td{text-align:center;}
+  .score td:first-child{text-align:left;}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .checks{list-style:none;margin:2px 0 0;padding:0;}
+  .checks li{padding-left:13px;position:relative;margin-bottom:1.5px;}
+  .checks li::before{content:"";position:absolute;left:0;top:2px;width:8px;height:8px;border:1.2px solid var(--green);border-radius:2px;}
+
+  .sketch{flex:1;min-height:2.05in;border:1px solid var(--border);border-radius:4px;margin-top:3px;position:relative;
+    background-image:linear-gradient(#e6e9e2 1px,transparent 1px),linear-gradient(90deg,#e6e9e2 1px,transparent 1px);
+    background-size:9px 9px;}
+  .sketch .n{position:absolute;top:3px;right:5px;font-weight:800;font-size:7pt;color:var(--green);}
+  .sketch .n::before{content:"▲";display:block;text-align:center;font-size:7pt;}
+  .sketch .k{position:absolute;bottom:2px;left:4px;font-size:6.4pt;color:var(--muted);background:#fff;padding:0 3px;}
+  .full{grid-column:1 / -1;}
+
+  /* footer */
+  footer{display:flex;gap:10px;align-items:stretch;border-top:2.5px solid var(--green);padding-top:6px;}
+  .soil{flex:1.05;background:var(--green-light);border-radius:7px;padding:5px 8px;font-size:7.4pt;}
+  .soil b.t{display:block;color:var(--green-dark);font-size:8pt;margin-bottom:1px;}
+  .soil ol{margin:0;padding-left:13px;}
+  .me{flex:1;font-size:7.6pt;display:flex;flex-direction:column;justify-content:center;}
+  .me .name{font-weight:800;font-size:10pt;color:var(--green);}
+  .me .role{font-weight:600;color:var(--muted);margin-bottom:3px;}
+  .me a{color:var(--text);text-decoration:none;}
+  .cta{width:2.75in;display:flex;gap:6px;align-items:center;border:1.5px solid var(--green);border-radius:7px;padding:5px;}
+  .qr{width:1in;height:1in;flex:none;border:1.5px dashed var(--muted);border-radius:4px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:6.5pt;color:var(--muted);font-weight:600;}
+  .cta-text{font-size:7.3pt;}
+  .cta-text b{display:block;font-size:8.6pt;color:var(--green-dark);line-height:1.15;margin-bottom:2px;}
+
+  @media screen{
+    body{background:#eef0ea;padding:24px 16px;}
+    .page{background:#fff;padding:0.4in;width:8.5in;height:11in;box-shadow:0 4px 24px rgba(0,0,0,.12);}
+    @media (max-width:880px){ .page{width:100%;height:auto;} .grid,.two{grid-template-columns:1fr;} footer,header{flex-wrap:wrap;} }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <img src="logo.png" alt="Radical Gardening logo">
+    <div class="h-title">
+      <div class="eyebrow">Sow True Seed · Design Your Regenerative Kitchen Garden</div>
+      <h1>My Garden Plan</h1>
+      <div class="sub">Goals → Site → Scale → Sketch → Crops, in that order. <b style="color:#7a5205">The #1 mistake: planting before planning.</b></div>
+    </div>
+    <div class="goal">“By the end of this season I want my garden to…”
+      <div class="fill"></div><div class="fill"></div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- STEP 1 -->
+    <section class="box">
+      <h2><span class="num">1</span>Define Your Goals</h2>
+      <div class="tag">Goals are the filter for every decision after this.</div>
+      <div class="lbl">My top 2 reasons <span style="font-weight:500">(circle):</span></div>
+      <div>save money · eat fresher · food security · learn a skill · heal the land · kids/family · beauty</div>
+      <div class="lbl">10 things my household actually cooks with <span style="font-weight:500">(not what you wish you cooked)</span></div>
+      <div class="two"><div><div class="fill sm"></div><div class="fill sm"></div><div class="fill sm"></div><div class="fill sm"></div><div class="fill sm"></div></div><div><div class="fill sm"></div><div class="fill sm"></div><div class="fill sm"></div><div class="fill sm"></div><div class="fill sm"></div></div></div>
+      <div style="margin-top:4px">Honest hours/week: <span class="inline"></span> &nbsp; Season budget: $<span class="inline"></span></div>
+      <div style="margin-top:3px">Constraints (renting, pets, kids, slope): <span class="inline" style="min-width:110px"></span></div>
+    </section>
+
+    <!-- STEP 2 -->
+    <section class="box">
+      <h2><span class="num">2</span>Pick Your Location</h2>
+      <div class="tag">Sunniest spot with good drainage, nearest your kitchen door.</div>
+      <table class="score">
+        <tr><th>Score each spot 1–3</th><th>A</th><th>B</th><th>C</th></tr>
+        <tr><td><b>Sun</b> 6+ hrs (check 9am · noon · 4pm)</td><td></td><td></td><td></td></tr>
+        <tr><td><b>Water</b> near spigot, no pooling</td><td></td><td></td><td></td></tr>
+        <tr><td><b>Access</b> close to kitchen door</td><td></td><td></td><td></td></tr>
+        <tr><td><b>Soil</b> tests below</td><td></td><td></td><td></td></tr>
+        <tr><th>Total → highest wins</th><th></th><th></th><th></th></tr>
+      </table>
+      <div class="lbl">Quick soil tests</div>
+      <ul class="tips">
+        <li><b>Compaction:</b> push rebar in — stops at <span class="inline" style="min-width:26px"></span> in.</li>
+        <li><b>Drainage:</b> fill a 12" hole — empties in <span class="inline" style="min-width:22px"></span> hrs (1–4 ideal)</li>
+        <li><b>Worms</b> per shovelful <span class="inline" style="min-width:22px"></span> (5+ = healthy) · then look, feel, smell</li>
+      </ul>
+      <div>Zone <span class="inline"></span> Last spring frost <span class="inline"></span> First fall frost <span class="inline"></span></div>
+      <div style="font-size:6.6pt;color:var(--muted);margin-top:1px">almanac.com/gardening/frostdates · Sun Seeker app · call 811 before digging</div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="box">
+      <h2><span class="num">3</span>Get a Rough Idea of Scale</h2>
+      <div class="tag">Inputs: goals + time + site. Rule of thumb: ~30 min per bed per week.</div>
+      <table>
+        <tr><th>Model</th><th>Beds (4×10 ft)</th><th>Growing space</th><th>Time / week</th></tr>
+        <tr><td><b>Starter</b></td><td>4–6</td><td>160–240 sq ft</td><td>1.5–2 hrs</td></tr>
+        <tr><td><b>Family</b></td><td>10–14</td><td>400–560 sq ft</td><td>3–4 hrs</td></tr>
+        <tr><td><b>Self-sufficiency</b></td><td>18–24</td><td>720–960 sq ft</td><td>5–8 hrs</td></tr>
+      </table>
+      <div style="margin-top:4px">Beds <b>4 ft wide</b> (reach the middle) · paths <b>2–3 ft</b> · run beds <b>north–south</b> (across the slope if sloped)</div>
+      <div style="margin-top:5px;font-weight:600">“My garden is <span class="inline" style="min-width:50px"></span> sq ft with <span class="inline" style="min-width:30px"></span> beds.”</div>
+      <div style="margin-top:2px;font-style:italic;color:var(--green-dark)">When in doubt, go smaller. A small garden run well beats a big one that overwhelms you.</div>
+      <div class="win">Action: <span>mark the footprint with a hose or string and stand inside it.</span></div>
+    </section>
+
+    <!-- STEP 5 -->
+    <section class="box">
+      <h2><span class="num">5</span>Crops &amp; Calendar</h2>
+      <div class="tag">Start with your Foundation &amp; Meal Maker staples. Count back from frost dates.</div>
+      <table>
+        <tr><th>Top 5 crops</th><th>Cool / Warm</th><th>Start indoors</th><th>Transplant / Sow</th></tr>
+        <tr><td class="blank"></td><td></td><td></td><td></td></tr>
+        <tr><td class="blank"></td><td></td><td></td><td></td></tr>
+        <tr><td class="blank"></td><td></td><td></td><td></td></tr>
+        <tr><td class="blank"></td><td></td><td></td><td></td></tr>
+        <tr><td class="blank"></td><td></td><td></td><td></td></tr>
+      </table>
+      <div style="margin-top:3px;font-size:7.2pt"><b>Cool season</b> (around frost): kale, collards, lettuce, peas, carrots, beets, onions, garlic · <b>Warm season</b> (after last frost): tomatoes, beans, squash, sweet potatoes, okra, corn</div>
+      <div style="font-size:7.2pt;margin-top:2px"><b>Succession = no empty beds:</b> garlic → fall carrots · spring peas → summer beans · lettuce → tomatoes. Re-sow lettuce monthly, beans every 2–3 wks.</div>
+    </section>
+
+    <!-- STEP 4 -->
+    <section class="box full" style="flex-direction:row;gap:10px;">
+      <div style="width:2.2in;display:flex;flex-direction:column;">
+        <h2><span class="num">4</span>Design &amp; Sketch</h2>
+        <div class="tag">Pencil — erase and rearrange freely.</div>
+        <div class="lbl">Place in this order:</div>
+        <ol style="margin:1px 0 3px;padding-left:14px;">
+          <li><b>Water</b> — spigot, rain tank, flow</li>
+          <li><b>Zones</b> — daily crops closest</li>
+          <li><b>Beds &amp; paths</b> — 4 ft / 2–3 ft</li>
+          <li><b>Compost, gate, trellis</b></li>
+          <li><b>Plants</b> — annuals; perennials on edges</li>
+        </ol>
+        <div>Also mark: house, sun, water arrows, wind.</div>
+        <div class="lbl" style="margin-top:4px">Build first (phase 1):</div>
+        <div class="fill sm"></div>
+        <div class="win">Win: <span>a labeled sketch someone else could understand.</span></div>
+      </div>
+      <div class="sketch"><span class="n">N</span><span class="k">1 square = 1 ft</span></div>
+      <div style="width:1.55in;display:flex;flex-direction:column;">
+        <h2 style="font-size:8.8pt">Winter to-do</h2>
+        <div class="tag">Pick ONE to do this week.</div>
+        <ul class="checks">
+          <li>Order seeds (buy here today!)</li>
+          <li>Source compost &amp; mulch</li>
+          <li>Rake fall leaves for mulch</li>
+          <li>Flag the spot, take sun photos</li>
+          <li>Draw the basemap</li>
+          <li>Sheet-mulch your first beds</li>
+        </ul>
+        <div class="lbl" style="margin-top:5px">Healthy-garden habits</div>
+        <ul class="tips" style="font-size:7pt">
+          <li>Walk it 3× a week</li>
+          <li>Mix in flowers &amp; herbs for beneficial insects</li>
+          <li>Pests: handpick → barrier → soap → organic spray</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div class="soil">
+      <b class="t">4 Principles of Living Soil</b>
+      <ol>
+        <li><b>Minimize disturbance</b> — build beds once, never till</li>
+        <li><b>Keep it covered</b> — leaves, straw, clippings, chips</li>
+        <li><b>Keep roots in the ground</b> — no bare beds</li>
+        <li><b>Add life</b> — compost, worm castings, diversity</li>
+      </ol>
+    </div>
+    <div class="me">
+      <div class="name">Jonny Roberts</div>
+      <div class="role">Regenerative Kitchen Garden Coach<br>Founder, Radical Gardening School<br>Weaverville, NC</div>
+      <div>✉ <a href="mailto:jon@radical-gardening.com">jon@radical-gardening.com</a></div>
+      <div>🌐 <a href="https://radical-gardening.com">radical-gardening.com</a></div>
+    </div>
+    <div class="cta">
+      <div class="qr">QR CODE<br>HERE</div>
+      <div class="cta-text"><b>Book a Free Garden Strategy Session</b>Turn this sheet into a real plan for your yard. We'll map your goals, challenges &amp; next steps.<br><span style="font-weight:700;color:var(--green-dark)">radical-gardening.com/start</span></div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
